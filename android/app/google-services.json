@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "91470313678",
+    "project_id": "car-ticket-app",
+    "storage_bucket": "car-ticket-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:91470313678:android:b22c5e5dbf7a398f39b89f",
+        "android_client_info": {
+          "package_name": "com.example.car_ticket"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXeTIc7AXVD8kReGFX1_erdMo3KCwzGl8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:91470313678:android:84fa0a69cf85d84039b89f",
+        "android_client_info": {
+          "package_name": "com.example.new_car_ticket"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXeTIc7AXVD8kReGFX1_erdMo3KCwzGl8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
