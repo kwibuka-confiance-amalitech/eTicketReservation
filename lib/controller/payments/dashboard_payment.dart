@@ -33,4 +33,79 @@ class DashboardPaymentController extends GetxController {
     });
     return total;
   }
+
+  int get todayRevenue {
+    return _calculateTodayRevenue(userPayments);
+  }
+
+  int get weekRevenue {
+    return _calculateWeekRevenue(userPayments);
+  }
+
+  int _calculateTodayRevenue(List<UserPayment> payments) {
+    if (payments.isEmpty) return 0;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    final todayPayments = payments.where((payment) {
+      DateTime paymentDate;
+      try {
+        paymentDate = DateTime.parse(payment.paymentDate);
+      } catch (e) {
+        return false;
+      }
+
+      final paymentDay =
+          DateTime(paymentDate.year, paymentDate.month, paymentDate.day);
+      return paymentDay.isAtSameMomentAs(today);
+    });
+
+    int totalRevenue = 0;
+    for (var payment in todayPayments) {
+      try {
+        totalRevenue += int.parse(payment.paymentAmount);
+      } catch (e) {
+        continue;
+      }
+    }
+
+    return totalRevenue;
+  }
+
+  int _calculateWeekRevenue(List<UserPayment> payments) {
+    if (payments.isEmpty) return 0;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    final daysToSubtract = now.weekday - 1;
+    final startOfWeek = today.subtract(Duration(days: daysToSubtract));
+
+    final weekPayments = payments.where((payment) {
+      DateTime paymentDate;
+      try {
+        paymentDate = DateTime.parse(payment.paymentDate);
+      } catch (e) {
+        return false;
+      }
+
+      final paymentDay =
+          DateTime(paymentDate.year, paymentDate.month, paymentDate.day);
+      return paymentDay.isAtSameMomentAs(today) ||
+          (paymentDay.isAfter(startOfWeek.subtract(const Duration(days: 1))) &&
+              paymentDay.isBefore(today.add(const Duration(days: 1))));
+    });
+
+    int totalRevenue = 0;
+    for (var payment in weekPayments) {
+      try {
+        totalRevenue += int.parse(payment.paymentAmount);
+      } catch (e) {
+        continue;
+      }
+    }
+
+    return totalRevenue;
+  }
 }

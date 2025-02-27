@@ -1,5 +1,5 @@
 import 'package:car_ticket/controller/home/destinations.dart';
-import 'package:car_ticket/presentation/screens/main_screen/dashboard/destination/add_destination.dart';
+import 'package:car_ticket/presentation/screens/main_screen/dashboard/destination/edit_destination.dart';
 import 'package:car_ticket/presentation/screens/main_screen/home/car_availability_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';

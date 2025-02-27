@@ -1,193 +1,570 @@
 import 'package:car_ticket/controller/dashboard/journey_destination_controller.dart';
 import 'package:car_ticket/domain/models/destination/journey_destination.dart';
-import 'package:car_ticket/presentation/widgets/custom_textfields_decoration.dart';
 import 'package:car_ticket/presentation/widgets/main_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
-class EditDestinationWidget extends StatelessWidget {
+class EditDestinationWidget extends StatefulWidget {
   final JourneyDestination destination;
-  const EditDestinationWidget({required this.destination, super.key});
+
+  const EditDestinationWidget({
+    required this.destination,
+    super.key,
+  });
+
+  @override
+  State<EditDestinationWidget> createState() => _EditDestinationWidgetState();
+}
+
+class _EditDestinationWidgetState extends State<EditDestinationWidget> {
+  final List<String> popularDestinations = [
+    'Kigali to Musanze',
+    'Kigali to Huye',
+    'Kigali to Rubavu',
+    'Kigali to Rusizi',
+    'Kigali to Nyagatare',
+    'Musanze to Kigali',
+    'Huye to Kigali',
+    'Rubavu to Kigali',
+  ];
+
+  late String? selectedDestination;
+  late TimeOfDay initialTime;
+  late TimeOfDay finalTime;
+  late DateTime? selectedDate;
+  late TextEditingController imageUrlController;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize controllers
+    selectedDestination = widget.destination.description;
+
+    // Parse time strings
+    final initialTimeParts = widget.destination.from.split(':');
+    initialTime = TimeOfDay(
+      hour: int.parse(initialTimeParts[0]),
+      minute: int.parse(initialTimeParts[1]),
+    );
+
+    final finalTimeParts = widget.destination.to.split(':');
+    finalTime = TimeOfDay(
+      hour: int.parse(finalTimeParts[0]),
+      minute: int.parse(finalTimeParts[1]),
+    );
+
+    // Parse start date
+    selectedDate = widget.destination.startDate != null
+        ? DateTime.parse(widget.destination.startDate!)
+        : null;
+
+    // Image URL
+    imageUrlController =
+        TextEditingController(text: widget.destination.imageUrl);
+  }
+
+  @override
+  void dispose() {
+    imageUrlController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder(
-        init: JourneyDestinationController(),
-        builder: (JourneyDestinationController destinationController) {
-          return Container(
-            padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 20.w),
-            child: Wrap(
-              children: [
-                Padding(
-                  padding: EdgeInsets.only(bottom: 20.0.h, top: 10.h),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: EdgeInsets.only(bottom: 20.h),
-                        child: Text(
-                          "Edit Destination",
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                          onPressed: () {
-                            Get.back();
-                            destinationController.clearInitializedItems();
-                          },
-                          icon: const Icon(Icons.close))
-                    ],
-                  ),
-                ),
-                Column(
+    return GetBuilder<JourneyDestinationController>(
+      init: JourneyDestinationController(),
+      builder: (JourneyDestinationController destinationController) {
+        // Initialize controller with destination data
+        destinationController.priceController.text = widget.destination.price;
+        destinationController.durationController.text =
+            widget.destination.duration;
+        destinationController.initialTime = widget.destination.from;
+        destinationController.finalTime = widget.destination.to;
+        destinationController.selectedDestination =
+            widget.destination.description;
+
+        return Container(
+          padding: EdgeInsets.symmetric(vertical: 20.h),
+          child: Column(
+            children: [
+              // Header with drag handle
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: MediaQuery.of(context).size.width,
-                      padding: EdgeInsets.symmetric(horizontal: 20.h),
-                      decoration: BoxDecoration(
-                          border: Border.all(
-                              color: Colors.grey.shade400,
-                              width: 1.5.w,
-                              style: BorderStyle.solid),
-                          borderRadius: BorderRadius.circular(10.r)),
-                      child: DropdownButton<String>(
-                        value: destinationController.selectedDestination,
-                        isExpanded: true,
-                        icon: const Icon(Icons.arrow_downward),
-                        iconSize: 16.sp,
-                        elevation: 16,
-                        hint: const Text("Select Destination"),
-                        style: const TextStyle(
-                            color: Color.fromARGB(255, 71, 71, 71)),
-                        underline: Container(
-                          height: 0,
-                          color: const Color.fromARGB(255, 68, 68, 68),
+                    Center(
+                      child: Container(
+                        width: 50.w,
+                        height: 5.h,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(2.5),
                         ),
-                        onChanged:
-                            destinationController.selectedDestinationChange,
-                        items: destinationNames.map<DropdownMenuItem<String>>(
-                            (DestinationName value) {
-                          return DropdownMenuItem<String>(
-                            value: value.name.toString(),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 14.r,
-                                  backgroundColor:
-                                      Theme.of(context).colorScheme.secondary,
-                                  foregroundColor: Colors.white,
-                                  child: Text(
-                                    value.name.substring(0, 1),
-                                    style: TextStyle(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.w600),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: 10.w,
-                                ),
-                                Text(
-                                  value.name,
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
                       ),
                     ),
-                    Gap(10.h),
+                    Gap(20.h),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        TimePickerWidget(
-                          chooseTime: destinationController.initialTime,
-                          title: "From",
-                          onTimeChanged: (value) {
-                            destinationController.initialTime = value;
-                            destinationController.update();
-                          },
+                        Container(
+                          padding: EdgeInsets.all(10.w),
+                          decoration: BoxDecoration(
+                            color:
+                                Theme.of(context).primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.edit_road,
+                            color: Theme.of(context).primaryColor,
+                            size: 24.sp,
+                          ),
                         ),
-                        TimePickerWidget(
-                          chooseTime: destinationController.finalTime,
-                          title: "To",
-                          onTimeChanged: (value) {
-                            destinationController.finalTime = value;
-                            destinationController.update();
-                          },
+                        SizedBox(width: 16.w),
+                        Text(
+                          "Edit Route",
+                          style: TextStyle(
+                            fontSize: 20.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
-                    TextFormField(
-                        initialValue: destination.price,
-                        keyboardType: TextInputType.number,
-                        textInputAction: TextInputAction.next,
-                        decoration: customTextFieldDecoration(
-                            labelText: "Price",
-                            hintText: "Price",
-                            context: context),
-                        onChanged: (value) {
-                          destinationController.priceController.text = value;
-                        }),
-                    const Gap(15),
-                    TextFormField(
-                        initialValue: destination.duration,
-                        textInputAction: TextInputAction.done,
-                        decoration: customTextFieldDecoration(
-                            labelText: "Duration",
-                            hintText: "Duration",
-                            context: context),
-                        onChanged: (value) {
-                          destinationController.durationController.text = value;
-                        }),
-                    const Gap(15),
-                    Container(
-                      padding: EdgeInsets.only(
-                          left: 20.w, right: 20.w, bottom: 20.h, top: 10.h),
-                      child: MainButton(
+                    Gap(24.h),
+                  ],
+                ),
+              ),
+
+              // Form content
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  child: Form(
+                    key: destinationController.destinationformKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Route information section
+                        _buildSectionTitle('Route Information'),
+                        Gap(16.h),
+
+                        // Route dropdown
+                        _buildDropdownField(
+                          label: 'Select Route',
+                          value: selectedDestination,
+                          items: popularDestinations.map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              selectedDestination = value;
+                              destinationController
+                                  .selectedDestinationChange(value);
+                            });
+                          },
+                        ),
+
+                        Gap(16.h),
+
+                        // Price field
+                        TextFormField(
+                          controller: destinationController.priceController,
+                          keyboardType: TextInputType.number,
+                          decoration: _buildInputDecoration(
+                            label: 'Price (RWF)',
+                            prefixIcon: Icons.monetization_on_outlined,
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter the price';
+                            }
+                            return null;
+                          },
+                        ),
+
+                        Gap(16.h),
+
+                        // Duration field
+                        TextFormField(
+                          controller: destinationController.durationController,
+                          decoration: _buildInputDecoration(
+                            label: 'Duration',
+                            prefixIcon: Icons.timer_outlined,
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter the duration';
+                            }
+                            return null;
+                          },
+                        ),
+
+                        Gap(24.h),
+
+                        // Schedule section
+                        _buildSectionTitle('Schedule Information'),
+                        Gap(16.h),
+
+                        // Time pickers row
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildTimePicker(
+                                label: 'Departure',
+                                time: initialTime,
+                                onTap: () async {
+                                  final TimeOfDay? picked =
+                                      await showTimePicker(
+                                    context: context,
+                                    initialTime: initialTime,
+                                  );
+                                  if (picked != null && picked != initialTime) {
+                                    setState(() {
+                                      initialTime = picked;
+
+                                      // Update destinationController
+                                      final hour = picked.hour
+                                          .toString()
+                                          .padLeft(2, '0');
+                                      final minute = picked.minute
+                                          .toString()
+                                          .padLeft(2, '0');
+                                      destinationController.initialTime =
+                                          '$hour:$minute';
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16.w),
+                            Expanded(
+                              child: _buildTimePicker(
+                                label: 'Arrival',
+                                time: finalTime,
+                                onTap: () async {
+                                  final TimeOfDay? picked =
+                                      await showTimePicker(
+                                    context: context,
+                                    initialTime: finalTime,
+                                  );
+                                  if (picked != null && picked != finalTime) {
+                                    setState(() {
+                                      finalTime = picked;
+
+                                      // Update destinationController
+                                      final hour = picked.hour
+                                          .toString()
+                                          .padLeft(2, '0');
+                                      final minute = picked.minute
+                                          .toString()
+                                          .padLeft(2, '0');
+                                      destinationController.finalTime =
+                                          '$hour:$minute';
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        Gap(16.h),
+
+                        // Date picker
+                        _buildDatePicker(
+                          label: 'Start Date',
+                          value: selectedDate != null
+                              ? DateFormat('dd MMM, yyyy').format(selectedDate!)
+                              : 'Select date',
+                          onTap: () async {
+                            final DateTime? picked = await showDatePicker(
+                              context: context,
+                              initialDate: selectedDate ?? DateTime.now(),
+                              firstDate: DateTime.now()
+                                  .subtract(const Duration(days: 365)),
+                              lastDate:
+                                  DateTime.now().add(const Duration(days: 365)),
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                selectedDate = picked;
+                                destinationController.startDate = picked;
+                              });
+                            }
+                          },
+                        ),
+
+                        Gap(24.h),
+
+                        // Additional information section
+                        _buildSectionTitle('Additional Information'),
+                        Gap(16.h),
+
+                        // Image URL field
+                        TextFormField(
+                          controller: imageUrlController,
+                          decoration: _buildInputDecoration(
+                            label: 'Image URL',
+                            prefixIcon: Icons.image_outlined,
+                          ),
+                        ),
+
+                        Gap(16.h),
+
+                        // Available seats field
+                        TextFormField(
+                          controller:
+                              destinationController.availableSeatsController,
+                          keyboardType: TextInputType.number,
+                          decoration: _buildInputDecoration(
+                            label: 'Available Seats',
+                            prefixIcon: Icons.event_seat_outlined,
+                          ),
+                        ),
+
+                        // Assignment status
+                        Gap(24.h),
+
+                        if (widget.destination.isAssigned)
+                          Container(
+                            padding: EdgeInsets.all(16.w),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: Colors.orange.withOpacity(0.3)),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(8.w),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.withOpacity(0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.directions_bus,
+                                    color: Colors.orange,
+                                    size: 24.sp,
+                                  ),
+                                ),
+                                SizedBox(width: 16.w),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Route In Use',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16.sp,
+                                          color: Colors.orange,
+                                        ),
+                                      ),
+                                      SizedBox(height: 4.h),
+                                      Text(
+                                        'Vehicle ID: ${widget.destination.carId}',
+                                        style: TextStyle(
+                                          fontSize: 14.sp,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                        Gap(24.h),
+
+                        // Save button
+                        MainButton(
                           isColored: true,
                           isLoading:
                               destinationController.isDestinationCreating,
                           isDisabled:
                               destinationController.isDestinationCreating,
                           onPressed: () {
-                            final newDestination = JourneyDestination(
-                              id: destination.id,
-                              description:
-                                  destinationController.selectedDestination!,
-                              from: destinationController.initialTime,
-                              to: destinationController.finalTime,
-                              price: destinationController
-                                      .priceController.text.isEmpty
-                                  ? destination.price
-                                  : destinationController.priceController.text,
-                              duration: destinationController
-                                      .durationController.text.isEmpty
-                                  ? destination.duration
-                                  : destinationController
-                                      .durationController.text,
-                              imageUrl: destination.imageUrl,
-                              createdAt: destination.createdAt,
-                              updatedAt: DateTime.now().toString(),
-                              carId: destination.carId,
-                              isAssigned: destination.isAssigned,
-                            );
+                            if (destinationController
+                                .destinationformKey.currentState!
+                                .validate()) {
+                              final newDestination = JourneyDestination(
+                                id: widget.destination.id,
+                                description: selectedDestination!,
+                                from: destinationController.initialTime,
+                                to: destinationController.finalTime,
+                                price:
+                                    destinationController.priceController.text,
+                                duration: destinationController
+                                    .durationController.text,
+                                imageUrl: imageUrlController.text,
+                                createdAt: widget.destination.createdAt,
+                                updatedAt: DateTime.now().toString(),
+                                carId: widget.destination.carId,
+                                isAssigned: widget.destination.isAssigned,
+                                startDate: selectedDate?.toIso8601String(),
+                              );
 
-                            destinationController
-                                .createDestination(newDestination);
+                              destinationController
+                                  .createDestination(newDestination);
+                            }
                           },
-                          title: "Edit Destination"),
-                    )
-                  ],
+                          title: "Edit Destination",
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  InputDecoration _buildInputDecoration(
+      {required String label, required IconData prefixIcon}) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(prefixIcon),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 18.sp,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+
+  Widget _buildDropdownField({
+    required String label,
+    required String? value,
+    required List<DropdownMenuItem<String>> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Gap(8.h),
+        DropdownButtonFormField<String>(
+          value: value,
+          items: items,
+          onChanged: onChanged,
+          decoration: InputDecoration(
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTimePicker({
+    required String label,
+    required TimeOfDay time,
+    required VoidCallback onTap,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Gap(8.h),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  time.format(context),
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                  ),
+                ),
+                Icon(Icons.access_time),
               ],
             ),
-          );
-        });
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDatePicker({
+    required String label,
+    required String value,
+    required VoidCallback onTap,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Gap(8.h),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                  ),
+                ),
+                Icon(Icons.calendar_today),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 

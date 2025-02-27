@@ -1,318 +1,514 @@
 import 'package:car_ticket/controller/dashboard/journey_destination_controller.dart';
 import 'package:car_ticket/domain/models/destination/journey_destination.dart';
-import 'package:car_ticket/presentation/widgets/custom_textfields_decoration.dart';
 import 'package:car_ticket/presentation/widgets/main_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
-class AddDestination extends StatelessWidget {
+class AddDestination extends StatefulWidget {
   const AddDestination({super.key});
 
   @override
+  State<AddDestination> createState() => _AddDestinationState();
+}
+
+class _AddDestinationState extends State<AddDestination> {
+  final List<String> popularDestinations = [
+    'Kigali to Musanze',
+    'Kigali to Huye',
+    'Kigali to Rubavu',
+    'Kigali to Rusizi',
+    'Kigali to Nyagatare',
+    'Musanze to Kigali',
+    'Huye to Kigali',
+    'Rubavu to Kigali',
+  ];
+
+  String? selectedDestination;
+  TimeOfDay initialTime = TimeOfDay.now();
+  TimeOfDay finalTime =
+      TimeOfDay.now().replacing(hour: TimeOfDay.now().hour + 2);
+  DateTime? selectedDate;
+
+  final TextEditingController _imageUrlController = TextEditingController(
+      text:
+          'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=2069&auto=format&fit=crop');
+
+  @override
+  void dispose() {
+    _imageUrlController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return GetBuilder(
-        init: JourneyDestinationController(),
-        builder: (JourneyDestinationController destinationController) {
-          return Container(
-            padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 20.w),
-            child: Wrap(
-              children: [
-                Container(
-                  padding: EdgeInsets.only(bottom: 20.h),
-                  child: Text(
-                    "Add Destination",
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                ),
-                Column(
+    return GetBuilder<JourneyDestinationController>(
+      init: JourneyDestinationController(),
+      builder: (JourneyDestinationController destinationController) {
+        return Container(
+          padding: EdgeInsets.symmetric(vertical: 20.h),
+          child: Column(
+            children: [
+              // Header with drag handle
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: MediaQuery.of(context).size.width,
-                      padding: EdgeInsets.symmetric(horizontal: 20.h),
-                      decoration: BoxDecoration(
-                          border: Border.all(
-                              color: Colors.grey.shade400,
-                              width: 1.5.w,
-                              style: BorderStyle.solid),
-                          borderRadius: BorderRadius.circular(10.r)),
-                      child: DropdownButton<String>(
-                        value: destinationController.selectedDestination,
-                        isExpanded: true,
-                        icon: const Icon(Icons.arrow_downward),
-                        iconSize: 16.sp,
-                        elevation: 16,
-                        hint: const Text("Select Destination"),
-                        style: const TextStyle(
-                            color: Color.fromARGB(255, 71, 71, 71)),
-                        underline: Container(
-                          height: 0,
-                          color: const Color.fromARGB(255, 68, 68, 68),
+                    Center(
+                      child: Container(
+                        width: 50.w,
+                        height: 5.h,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(2.5),
                         ),
-                        onChanged:
-                            destinationController.selectedDestinationChange,
-                        items: destinationNames.map<DropdownMenuItem<String>>(
-                            (DestinationName value) {
-                          return DropdownMenuItem<String>(
-                            value: value.name.toString(),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 14.r,
-                                  backgroundColor:
-                                      Theme.of(context).colorScheme.secondary,
-                                  foregroundColor: Colors.white,
-                                  child: Text(
-                                    value.name.substring(0, 1),
-                                    style: TextStyle(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.w600),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: 10.w,
-                                ),
-                                Text(
-                                  value.name,
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
                       ),
                     ),
-                    Gap(10.h),
-                    DatePickerWidget(
-                      selectedDate: destinationController.startDate ?? DateTime.now(),
-                      title: "Start Date",
-                      onDateChanged: (date) {
-                        destinationController.startDate = date;
-                        destinationController.update();
-                      },
-                    ),
-                    Gap(10.h),
+                    Gap(20.h),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        TimePickerWidget(
-                          chooseTime: destinationController.initialTime,
-                          title: "From",
-                          onTimeChanged: (value) {
-                            destinationController.initialTime = value;
-                            destinationController.update();
-                          },
+                        Container(
+                          padding: EdgeInsets.all(10.w),
+                          decoration: BoxDecoration(
+                            color:
+                                Theme.of(context).primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.route,
+                            color: Theme.of(context).primaryColor,
+                            size: 24.sp,
+                          ),
                         ),
-                        TimePickerWidget(
-                          chooseTime: destinationController.finalTime,
-                          title: "To",
-                          onTimeChanged: (value) {
-                            destinationController.finalTime = value;
-                            destinationController.update();
-                          },
+                        SizedBox(width: 16.w),
+                        Text(
+                          "Add New Route",
+                          style: TextStyle(
+                            fontSize: 20.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
-                    TextFormField(
-                        controller: destinationController.priceController,
-                        keyboardType: TextInputType.number,
-                        textInputAction: TextInputAction.next,
-                        decoration: customTextFieldDecoration(
-                            labelText: "Price",
-                            hintText: "Price",
-                            context: context)),
-                    const Gap(15),
-                    TextFormField(
-                        controller: destinationController.durationController,
-                        textInputAction: TextInputAction.done,
-                        decoration: customTextFieldDecoration(
-                            labelText: "Duration",
-                            hintText: "Duration",
-                            context: context)),
-                    const Gap(15),
-                    Container(
-                      padding: EdgeInsets.only(
-                          left: 20.w, right: 20.w, bottom: 20.h, top: 10.h),
-                      child: MainButton(
-                          isColored: true,
-                          isLoading:
-                              destinationController.isDestinationCreating,
-                          isDisabled:
-                              destinationController.isDestinationCreating,
-                          onPressed: () {
-                            final uuid = const Uuid().v1();
-                            const picture =
-                                "https://www.kigalitoday.com/IMG/png/imodoka.png";
-                            final newDestination = JourneyDestination(
-                              id: uuid,
-                              description:
-                                  destinationController.selectedDestination!,
-                              from: destinationController.initialTime,
-                              to: destinationController.finalTime,
-                              price: destinationController.priceController.text,
-                              duration:
-                                  destinationController.durationController.text,
-                              imageUrl: picture,
-                              createdAt: DateTime.now().toString(),
-                              updatedAt: DateTime.now().toString(),
-                              carId: "",
-                              isAssigned: false,
-                            );
-
-                            destinationController
-                                .createDestination(newDestination);
-                          },
-                          title: "Add Destination"),
-                    )
-                  ],
-                ),
-              ],
-            ),
-          );
-        });
-  }
-}
-
-class DestinationName {
-  final int id;
-  final String name;
-
-  DestinationName({required this.id, required this.name});
-}
-
-List<DestinationName> destinationNames = [
-  DestinationName(id: 1, name: "Nyanza - Nyamata"),
-  DestinationName(id: 2, name: "Nyamata - Nyanza"),
-  DestinationName(id: 3, name: "Nyamata - Ramiro"),
-  DestinationName(id: 4, name: "Nyamata - Gashora"),
-  DestinationName(id: 5, name: "Nyamata - Batima"),
-
-];
-
-class TimePickerWidget extends StatefulWidget {
-  String chooseTime;
-  String title;
-  Function(String) onTimeChanged;
-  TimePickerWidget({
-    required this.chooseTime,
-    required this.title,
-    required this.onTimeChanged,
-    super.key,
-  });
-
-  @override
-  State<TimePickerWidget> createState() => _TimePickerWidgetState();
-}
-
-class _TimePickerWidgetState extends State<TimePickerWidget> {
-  @override
-  Widget build(BuildContext context) {
-    print(widget.chooseTime);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(widget.title),
-        const Gap(5),
-        Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            decoration: BoxDecoration(
-                border: Border.all(
-                    color: Colors.grey.shade400,
-                    width: 1.5,
-                    style: BorderStyle.solid),
-                borderRadius: BorderRadius.circular(10)),
-            child: GestureDetector(
-              onTap: () {
-                showTimePicker(
-                  context: context,
-                  initialTime: TimeOfDay.now(),
-                ).then((value) {
-                  if (value != null) {
-                    widget.onTimeChanged(value.format(context));
-                  }
-                });
-              },
-              child: Container(
-                width: 120,
-                padding: const EdgeInsets.all(5),
-                child: Row(
-                  children: [
-                    const Icon(Icons.access_time),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    Text(widget.chooseTime)
+                    Gap(24.h),
                   ],
                 ),
               ),
-            )),
-        const Gap(15)
+
+              // Form content
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  child: Form(
+                    key: destinationController.destinationformKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Route selection
+                        _buildSectionTitle('Route Information'),
+                        Gap(16.h),
+
+                        // Route dropdown
+                        _buildDropdownField(
+                          label: 'Select Route',
+                          hintText: 'Choose a route',
+                          value: selectedDestination,
+                          items: popularDestinations.map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              selectedDestination = value;
+                              destinationController
+                                  .selectedDestinationChange(value);
+                            });
+                          },
+                        ),
+
+                        Gap(16.h),
+
+                        // Price field
+                        TextFormField(
+                          controller: destinationController.priceController,
+                          keyboardType: TextInputType.number,
+                          decoration: _buildInputDecoration(
+                            label: 'Price (RWF)',
+                            hintText: 'e.g., 5000',
+                            prefixIcon: Icons.monetization_on_outlined,
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter the price';
+                            }
+                            return null;
+                          },
+                        ),
+
+                        Gap(16.h),
+
+                        // Duration field
+                        TextFormField(
+                          controller: destinationController.durationController,
+                          decoration: _buildInputDecoration(
+                            label: 'Duration',
+                            hintText: 'e.g., 2h 30min',
+                            prefixIcon: Icons.timer_outlined,
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter the duration';
+                            }
+                            return null;
+                          },
+                        ),
+
+                        Gap(24.h),
+
+                        _buildSectionTitle('Schedule Information'),
+                        Gap(16.h),
+
+                        // Time pickers row
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildTimePicker(
+                                label: 'Departure',
+                                time: initialTime,
+                                onTap: () async {
+                                  final TimeOfDay? picked =
+                                      await showTimePicker(
+                                    context: context,
+                                    initialTime: initialTime,
+                                  );
+                                  if (picked != null && picked != initialTime) {
+                                    setState(() {
+                                      initialTime = picked;
+
+                                      // Update destinationController
+                                      final hour = picked.hour
+                                          .toString()
+                                          .padLeft(2, '0');
+                                      final minute = picked.minute
+                                          .toString()
+                                          .padLeft(2, '0');
+                                      destinationController.initialTime =
+                                          '$hour:$minute';
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16.w),
+                            Expanded(
+                              child: _buildTimePicker(
+                                label: 'Arrival',
+                                time: finalTime,
+                                onTap: () async {
+                                  final TimeOfDay? picked =
+                                      await showTimePicker(
+                                    context: context,
+                                    initialTime: finalTime,
+                                  );
+                                  if (picked != null && picked != finalTime) {
+                                    setState(() {
+                                      finalTime = picked;
+
+                                      // Update destinationController
+                                      final hour = picked.hour
+                                          .toString()
+                                          .padLeft(2, '0');
+                                      final minute = picked.minute
+                                          .toString()
+                                          .padLeft(2, '0');
+                                      destinationController.finalTime =
+                                          '$hour:$minute';
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        Gap(16.h),
+
+                        // Date picker
+                        _buildDatePicker(
+                          label: 'Start Date',
+                          value: selectedDate != null
+                              ? DateFormat('dd MMM, yyyy').format(selectedDate!)
+                              : 'Select date',
+                          onTap: () async {
+                            final DateTime? picked = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime.now(),
+                              lastDate:
+                                  DateTime.now().add(const Duration(days: 365)),
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                selectedDate = picked;
+                                destinationController.startDate = picked;
+                              });
+                            }
+                          },
+                        ),
+
+                        Gap(24.h),
+
+                        _buildSectionTitle('Additional Information'),
+                        Gap(16.h),
+
+                        // Image URL
+                        TextFormField(
+                          controller: _imageUrlController,
+                          decoration: _buildInputDecoration(
+                            label: 'Image URL',
+                            hintText: 'Enter image URL',
+                            prefixIcon: Icons.image_outlined,
+                          ),
+                        ),
+
+                        Gap(16.h),
+
+                        // Available Seats
+                        TextFormField(
+                          controller:
+                              destinationController.availableSeatsController,
+                          keyboardType: TextInputType.number,
+                          decoration: _buildInputDecoration(
+                            label: 'Available Seats',
+                            hintText: 'e.g., 40',
+                            prefixIcon: Icons.event_seat_outlined,
+                          ),
+                        ),
+
+                        Gap(32.h),
+
+                        // Submit button
+                        MainButton(
+                          isColored: true,
+                          title: "Add Route",
+                          isDisabled:
+                              destinationController.isDestinationCreating,
+                          isLoading:
+                              destinationController.isDestinationCreating,
+                          onPressed: () {
+                            if (selectedDestination == null) {
+                              Get.snackbar(
+                                'Error',
+                                'Please select a route',
+                                snackPosition: SnackPosition.BOTTOM,
+                              );
+                              return;
+                            }
+
+                            if (destinationController
+                                .destinationformKey.currentState!
+                                .validate()) {
+                              // Create new journey destination
+                              destinationController
+                                  .createDestination(JourneyDestination(
+                                id: const Uuid().v4(),
+                                description: selectedDestination!,
+                                price:
+                                    destinationController.priceController.text,
+                                duration: destinationController.durationTime,
+                                from: destinationController.initialTime,
+                                to: destinationController.finalTime,
+                                imageUrl: _imageUrlController.text,
+                                createdAt: DateTime.now().toString(),
+                                updatedAt: DateTime.now().toString(),
+                                carId: "",
+                                isAssigned: false,
+                                startDate: selectedDate?.toString(),
+                              ));
+                            }
+                          },
+                        ),
+
+                        Gap(20.h),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 16.sp,
+        fontWeight: FontWeight.bold,
+        color: Colors.black87,
+      ),
+    );
+  }
+
+  InputDecoration _buildInputDecoration({
+    required String label,
+    required String hintText,
+    required IconData prefixIcon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hintText,
+      prefixIcon: Icon(prefixIcon),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Theme.of(context).primaryColor),
+      ),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: 16.w,
+        vertical: 16.h,
+      ),
+    );
+  }
+
+  Widget _buildDropdownField({
+    required String label,
+    required String hintText,
+    required String? value,
+    required List<DropdownMenuItem<String>> items,
+    required Function(String?) onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14.sp,
+            color: Colors.grey[700],
+          ),
+        ),
+        Gap(8.h),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[300]!),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: DropdownButtonFormField<String>(
+            value: value,
+            hint: Text(hintText),
+            decoration: InputDecoration(
+              prefixIcon: Icon(Icons.route, color: Colors.grey[600]),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 16.w),
+            ),
+            items: items,
+            onChanged: onChanged,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please select a route';
+              }
+              return null;
+            },
+          ),
+        ),
       ],
     );
   }
-}
 
-class DatePickerWidget extends StatelessWidget {
-  final DateTime selectedDate;
-  final String title;
-  final Function(DateTime) onDateChanged;
-
-  const DatePickerWidget({
-    super.key,
-    required this.selectedDate,
-    required this.title,
-    required this.onDateChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildTimePicker({
+    required String label,
+    required TimeOfDay time,
+    required VoidCallback onTap,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title),
-        Gap(5.h),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 20.w),
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: Colors.grey.shade400,
-              width: 1.5.w,
-              style: BorderStyle.solid
-            ),
-            borderRadius: BorderRadius.circular(10.r)
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14.sp,
+            color: Colors.grey[700],
           ),
-          child: GestureDetector(
-            onTap: () {
-              showDatePicker(
-                context: context,
-                initialDate: selectedDate,
-                firstDate: DateTime.now(),
-                lastDate: DateTime.now().add(const Duration(days: 365)),
-              ).then((value) {
-                if (value != null) {
-                  onDateChanged(value);
-                }
-              });
-            },
-            child: Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(5.h),
-              child: Row(
-                children: [
-                  Icon(Icons.calendar_today, size: 20.sp),
-                  SizedBox(width: 10.w),
-                  Text(
-                    "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}",
-                    style: TextStyle(fontSize: 16.sp),
-                  )
-                ],
-              ),
+        ),
+        Gap(8.h),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.access_time, color: Colors.grey[600]),
+                SizedBox(width: 12.w),
+                Text(
+                  time.format(context),
+                  style: TextStyle(fontSize: 16.sp),
+                ),
+              ],
             ),
           ),
         ),
-        Gap(15.h)
+      ],
+    );
+  }
+
+  Widget _buildDatePicker({
+    required String label,
+    required String value,
+    required VoidCallback onTap,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14.sp,
+            color: Colors.grey[700],
+          ),
+        ),
+        Gap(8.h),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.calendar_today, color: Colors.grey[600]),
+                SizedBox(width: 12.w),
+                Text(
+                  value,
+                  style: TextStyle(fontSize: 16.sp),
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }

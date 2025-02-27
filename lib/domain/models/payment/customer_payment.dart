@@ -13,6 +13,7 @@ class UserPayment {
   final String paymentTime;
   final List<Seat> seats;
   final String carId;
+  final String customerName; // Added customer name field
 
   UserPayment({
     required this.id,
@@ -27,6 +28,7 @@ class UserPayment {
     required this.paymentTime,
     required this.seats,
     required this.carId,
+    this.customerName = '', // Default to empty string
   });
 
   UserPayment.empty()
@@ -41,7 +43,8 @@ class UserPayment {
         paymentDate = '',
         paymentTime = '',
         seats = [],
-        carId = '';
+        carId = '',
+        customerName = '';
 
   Map<String, dynamic> toDocument() {
     return {
@@ -57,6 +60,7 @@ class UserPayment {
       'paymentTime': paymentTime,
       'seats': seats.map((e) => e.toDocument()).toList(),
       'carId': carId,
+      'customerName': customerName, // Added to document
     };
   }
 
@@ -74,6 +78,46 @@ class UserPayment {
       paymentTime: doc['paymentTime'],
       seats: (doc['seats'] as List).map((e) => Seat.fromDocument(e)).toList(),
       carId: doc['carId'],
+      customerName: doc['customerName'] ??
+          '', // Handle null case with default empty string
     );
+  }
+
+  // Add a copy with method for easier updates
+  UserPayment copyWith({
+    String? id,
+    String? userId,
+    String? paymentIntentId,
+    String? destinationId,
+    String? paymentStatus,
+    String? paymentAmount,
+    String? paymentCurrency,
+    String? paymentDescription,
+    String? paymentDate,
+    String? paymentTime,
+    List<Seat>? seats,
+    String? carId,
+    String? customerName,
+  }) {
+    return UserPayment(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      paymentIntentId: paymentIntentId ?? this.paymentIntentId,
+      destinationId: destinationId ?? this.destinationId,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+      paymentAmount: paymentAmount ?? this.paymentAmount,
+      paymentCurrency: paymentCurrency ?? this.paymentCurrency,
+      paymentDescription: paymentDescription ?? this.paymentDescription,
+      paymentDate: paymentDate ?? this.paymentDate,
+      paymentTime: paymentTime ?? this.paymentTime,
+      seats: seats ?? this.seats,
+      carId: carId ?? this.carId,
+      customerName: customerName ?? this.customerName,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'UserPayment{id: $id, customerName: $customerName, paymentDescription: $paymentDescription}';
   }
 }

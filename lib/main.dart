@@ -22,17 +22,22 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:get/route_manager.dart';
+
 import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  print('Loading environment variables...');
   await dotenv.load(fileName: ".env");
+  print('Initializing Firebase...');
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  print('Setting up Stripe...');
   Stripe.publishableKey = dotenv.env['STRIPE_TEST_PUBLISHABLE_KEY']!;
 
+  print('Starting app...');
   runApp(MyApp(
     userRepository: FirebaseUserRepository(firebaseAuth: FirebaseAuth.instance),
   ));

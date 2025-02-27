@@ -1,6 +1,5 @@
 import 'package:car_ticket/controller/dashboard/driver_controller.dart';
 import 'package:car_ticket/domain/models/driver/driver.dart';
-import 'package:car_ticket/presentation/screens/main_screen/dashboard/driver/edit_driver.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -48,7 +47,7 @@ class DriverOptionWidget extends StatelessWidget {
                 PopupMenuItem<DriverStatus>(
                   value: DriverStatus.edit,
                   onTap: () {
-                    bottomSheetEditDriver(context, driver);
+                    // bottomSheetEditDriver(context, driver);
                   },
                   child: const Text('Edit'),
                 ),
@@ -62,15 +61,15 @@ class DriverOptionWidget extends StatelessWidget {
     });
   }
 
-  bottomSheetEditDriver(BuildContext context, CarDriver driver) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => Padding(
-        padding:
-            EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: UpdateDriverWidget(driver: driver),
-      ),
-    );
-  }
+  // bottomSheetEditDriver(BuildContext context, CarDriver driver) {
+  //   showModalBottomSheet(
+  //     context: context,
+  //     isScrollControlled: true,
+  //     builder: (context) => Padding(
+  //       padding:
+  //           EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+  //       child: UpdateDriverWidget(driver: driver),
+  //     ),
+  //   );
+  // }
 }
