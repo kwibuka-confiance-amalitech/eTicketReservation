@@ -126,24 +126,47 @@ class _MainCardState extends State<MainCard>
                             letterSpacing: 1.2,
                           ),
                         ),
-                        FadeTransition(
-                          opacity: _fadeAnimation,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: const Text(
-                              "ADMIN",
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                        Row(
+                          children: [
+                            // Refresh button
+                            if (!controller.isLoading)
+                              InkWell(
+                                onTap: () => controller.refreshStats(),
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.refresh,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(width: 8),
+                            // Admin badge (existing code)
+                            FadeTransition(
+                              opacity: _fadeAnimation,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text(
+                                  "ADMIN",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
                       ],
                     ),
@@ -178,19 +201,19 @@ class _MainCardState extends State<MainCard>
                           Icons.directions_car_outlined,
                           controller.isLoading
                               ? "..."
-                              : _formatNumber(controller.availableCars),
+                              : "${_formatNumber(controller.availableCars)}/${_formatNumber(controller.totalCars)}",
                           "Available Cars",
                           controller.isLoading,
                         ),
-                        const SizedBox(width: 20),
-                        _buildStatItem(
-                          Icons.people_outline,
-                          controller.isLoading
-                              ? "..."
-                              : _formatNumber(controller.userCount),
-                          "Active Users",
-                          controller.isLoading,
-                        ),
+                        // const SizedBox(width: 20),
+                        // _buildStatItem(
+                        //   Icons.people_outline,
+                        //   controller.isLoading
+                        //       ? "..."
+                        //       : _formatNumber(controller.userCount),
+                        //   "Active Users",
+                        //   controller.isLoading,
+                        // ),
                       ],
                     ),
                   ],

@@ -23,7 +23,7 @@ class CarDriver extends Equatable {
     required this.city,
     required this.driverLicenseCategory,
     required this.sexStatus,
-    required this.isAssigned,
+    this.isAssigned = false,
   });
 
   static CarDriver empty = const CarDriver(
@@ -113,16 +113,16 @@ class CarDriver extends Equatable {
 
   static CarDriver fromDocument(Map<String, dynamic> doc) {
     return CarDriver(
-      id: doc['id'],
-      firstName: doc['firstName'],
-      lastName: doc['lastName'],
-      email: doc['email'],
-      phone: doc['phone'],
-      address: doc['address'],
-      city: doc['city'],
-      driverLicenseCategory: doc['driverLicenseCategory'],
-      sexStatus: doc['sexStatus'],
-      isAssigned: doc['isAssigned'],
+      id: doc['id'] ?? '',
+      firstName: doc['firstName'] ?? '',
+      lastName: doc['lastName'] ?? '',
+      email: doc['email'] ?? '',
+      phone: doc['phone'] ?? '',
+      address: doc['address'] ?? '',
+      city: doc['city'] ?? '',
+      driverLicenseCategory: doc['driverLicenseCategory'] ?? '',
+      sexStatus: doc['sexStatus'] ?? '',
+      isAssigned: doc['isAssigned'] ?? false,
     );
   }
 

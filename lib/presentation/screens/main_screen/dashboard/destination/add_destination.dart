@@ -17,14 +17,11 @@ class AddDestination extends StatefulWidget {
 
 class _AddDestinationState extends State<AddDestination> {
   final List<String> popularDestinations = [
-    'Kigali to Musanze',
-    'Kigali to Huye',
-    'Kigali to Rubavu',
-    'Kigali to Rusizi',
-    'Kigali to Nyagatare',
-    'Musanze to Kigali',
-    'Huye to Kigali',
-    'Rubavu to Kigali',
+    'Nyanza to Nyamata',
+    'Nyamata to Nyanza',
+    'Nyamata to Ramiro',
+    'Nyamata to Gashora',
+    'Nyamaata to Batima',
   ];
 
   String? selectedDestination;

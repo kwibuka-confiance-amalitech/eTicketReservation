@@ -15,6 +15,8 @@ class ExcelCar extends Equatable {
   final double mileage; // Added: current mileage
   final DateTime lastMaintenance; // Added: date of last maintenance
   final DateTime nextMaintenance; // Added: date of next scheduled maintenance
+  final int bookedSeats;
+  final int remainingSeats;
 
   ExcelCar({
     required this.id,
@@ -31,6 +33,8 @@ class ExcelCar extends Equatable {
     this.mileage = 0.0,
     DateTime? lastMaintenance,
     DateTime? nextMaintenance,
+    this.bookedSeats = 0, // Default to 0
+    this.remainingSeats = 0, // Default to 0
   })  :
         // Initialize DateTime fields with default values if null
         lastMaintenance =
@@ -70,6 +74,8 @@ class ExcelCar extends Equatable {
     double? mileage,
     DateTime? lastMaintenance,
     DateTime? nextMaintenance,
+    int? bookedSeats,
+    int? remainingSeats,
   }) {
     return ExcelCar(
       id: id ?? this.id,
@@ -86,6 +92,8 @@ class ExcelCar extends Equatable {
       mileage: mileage ?? this.mileage,
       lastMaintenance: lastMaintenance ?? this.lastMaintenance,
       nextMaintenance: nextMaintenance ?? this.nextMaintenance,
+      bookedSeats: bookedSeats ?? this.bookedSeats,
+      remainingSeats: remainingSeats ?? this.remainingSeats,
     );
   }
 
@@ -105,6 +113,8 @@ class ExcelCar extends Equatable {
       'mileage': mileage,
       'lastMaintenance': lastMaintenance.millisecondsSinceEpoch,
       'nextMaintenance': nextMaintenance.millisecondsSinceEpoch,
+      'bookedSeats': bookedSeats,
+      'remainingSeats': remainingSeats,
     };
   }
 
@@ -128,6 +138,8 @@ class ExcelCar extends Equatable {
       nextMaintenance: document['nextMaintenance'] != null
           ? DateTime.fromMillisecondsSinceEpoch(document['nextMaintenance'])
           : DateTime.now().add(const Duration(days: 90)),
+      bookedSeats: document['bookedSeats'] ?? 0,
+      remainingSeats: document['remainingSeats'] ?? 0,
     );
   }
 
@@ -146,6 +158,8 @@ class ExcelCar extends Equatable {
         isAssigned,
         mileage,
         lastMaintenance,
-        nextMaintenance
+        nextMaintenance,
+        bookedSeats,
+        remainingSeats,
       ];
 }

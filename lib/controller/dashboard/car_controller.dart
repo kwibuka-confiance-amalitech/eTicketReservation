@@ -1,8 +1,13 @@
 import 'dart:io';
 
+import 'package:car_ticket/controller/dashboard/dashboard_stats_controller.dart';
+import 'package:car_ticket/controller/dashboard/driver_controller.dart';
 import 'package:car_ticket/domain/models/car/car.dart';
+import 'package:car_ticket/domain/models/driver/driver.dart';
 import 'package:car_ticket/domain/models/seat.dart';
 import 'package:car_ticket/domain/repositories/car_repository/car_repository_imp.dart';
+import 'package:car_ticket/domain/repositories/user/driver_repository_imp.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
@@ -22,6 +27,7 @@ class CarController extends GetxController {
   bool isAssigningDriver = false;
 
   ScreenshotController screenshotController = ScreenshotController();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   bool isCarCreating = false;
   bool isGettingCars = false;
@@ -57,6 +63,11 @@ class CarController extends GetxController {
           snackPosition: SnackPosition.BOTTOM);
       isCarCreating = false;
       update();
+
+      // Refresh dashboard stats if controller exists
+      if (Get.isRegistered<DashboardStatsController>()) {
+        Get.find<DashboardStatsController>().refreshStats();
+      }
     } catch (e) {
       isCarCreating = false;
       update();
@@ -64,33 +75,170 @@ class CarController extends GetxController {
     }
   }
 
-  Future getCars() async {
-    isGettingCars = true;
-    update();
+  Future<void> getCars() async {
     try {
-      final response = await carRepository.getCars();
+      isGettingCars = true;
+      update();
 
-      cars = response;
-      isGettingCars = false;
-      update();
+      final carsSnapshot = await _firestore.collection('cars').get();
+
+      cars = carsSnapshot.docs
+          .map((doc) => ExcelCar.fromDocument(doc.data()))
+          .toList();
+
+      // Calculate seat availability for all cars
+      await updateSeatAvailability();
     } catch (e) {
+      print('Error fetching cars: $e');
+    } finally {
       isGettingCars = false;
       update();
-      rethrow;
     }
   }
 
-  Future assignDriverToCar(
-      {required String carId, required String driverId}) async {
+  Future<void> updateSeatAvailability() async {
+    try {
+      final updatedCars = <ExcelCar>[];
+
+      for (final car in cars) {
+        // Fetch active bookings for this car
+        final bookingsSnapshot = await _firestore
+            .collection('payments')
+            .where('carId', isEqualTo: car.id)
+            .where('paymentStatus', whereIn: ['completed', 'success']).get();
+
+        // Count total booked seats from all bookings
+        int totalBookedSeats = 0;
+        for (var doc in bookingsSnapshot.docs) {
+          final List<dynamic> seats = doc['seats'] ?? [];
+          totalBookedSeats += seats.length;
+        }
+
+        // Calculate remaining seats
+        final int remainingSeats = car.seatNumbers - totalBookedSeats;
+
+        // Create updated car with seat information
+        final updatedCar = car.copyWith(
+          bookedSeats: totalBookedSeats,
+          remainingSeats: remainingSeats,
+        );
+
+        updatedCars.add(updatedCar);
+      }
+
+      // Replace cars list with updated information
+      cars = updatedCars;
+      update();
+    } catch (e) {
+      print('Error updating seat availability: $e');
+    }
+  }
+
+  // Add this new method to check if a driver is already assigned to any car
+  Future<bool> isDriverAlreadyAssigned(String driverId) async {
+    try {
+      // Query for cars with this driver
+      final carsSnapshot = await _firestore
+          .collection('cars')
+          .where('driverId', isEqualTo: driverId)
+          .get();
+
+      // Return true if any cars found with this driver
+      return carsSnapshot.docs.isNotEmpty;
+    } catch (e) {
+      print('Error checking driver assignment: $e');
+      return false;
+    }
+  }
+
+  // Now modify the assignDriverToCar method to include this check
+  Future assignDriverToCar({
+    required String carId,
+    required String driverId,
+    String? driverName,
+  }) async {
     try {
       isAssigningDriver = true;
       update();
-      await carRepository.assignDriverToCar(driverId, carId);
+
+      // First check if this driver is already assigned elsewhere
+      final bool alreadyAssigned = await isDriverAlreadyAssigned(driverId);
+
+      if (alreadyAssigned) {
+        // If driver is already assigned to a different car, throw an error
+        isAssigningDriver = false;
+        update();
+
+        // Get the car this driver is assigned to
+        final assignedCarSnapshot = await _firestore
+            .collection('cars')
+            .where('driverId', isEqualTo: driverId)
+            .get();
+
+        String carName = "another vehicle";
+        if (assignedCarSnapshot.docs.isNotEmpty) {
+          carName = assignedCarSnapshot.docs.first.data()['name'] ??
+              "another vehicle";
+        }
+
+        Get.snackbar(
+          "Driver Already Assigned",
+          "This driver is already assigned to $carName. Please unassign the driver first.",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withOpacity(0.8),
+          colorText: Colors.white,
+          duration: const Duration(seconds: 4),
+        );
+
+        return;
+      }
+
+      // Proceed with assignment since driver is available
+      String finalDriverName = driverName ?? '';
+
+      // If driver name wasn't provided, try to fetch it
+      if (finalDriverName.isEmpty) {
+        try {
+          final driverDoc =
+              await _firestore.collection('drivers').doc(driverId).get();
+          if (driverDoc.exists) {
+            final firstName = driverDoc.data()?['firstName'] ?? '';
+            final lastName = driverDoc.data()?['lastName'] ?? '';
+            finalDriverName = '$firstName $lastName'.trim();
+          }
+        } catch (e) {
+          print('Error fetching driver name: $e');
+        }
+      }
+
+      // Assign the driver to the car
+      await carRepository.assignDriverToCar(driverId, carId,
+          driverName: finalDriverName);
+
+      // IMPORTANT: Now update the driver's status to assigned
+      final driverRepository = Get.find<DriverRepositoryImp>();
+      final driverDoc =
+          await _firestore.collection('drivers').doc(driverId).get();
+      if (driverDoc.exists) {
+        final driver = CarDriver.fromDocument(driverDoc.data()!);
+        final updatedDriver = driver.copyWith(isAssigned: true);
+        await driverRepository.updateDriver(updatedDriver);
+      }
+
+      // Refresh data
+      await getCars();
+      await Get.find<DriverController>().getDrivers();
+
+      // Refresh dashboard stats if controller exists
+      if (Get.isRegistered<DashboardStatsController>()) {
+        Get.find<DashboardStatsController>().refreshStats();
+      }
+
       isAssigningDriver = false;
       update();
       Get.back();
-      Get.snackbar(
-          "Driver Assigned", "Driver has been assigned to car successfully",
+      Get.snackbar("Driver Assigned",
+          "Driver ${finalDriverName.isNotEmpty ? finalDriverName : 'has been'} assigned to car successfully",
           snackPosition: SnackPosition.BOTTOM);
     } catch (e) {
       isAssigningDriver = false;
@@ -105,17 +253,44 @@ class CarController extends GetxController {
     try {
       isAssigningDriver = true;
       update();
+
+      // Get the driver ID before unassigning
+      final carDoc = await _firestore.collection('cars').doc(carId).get();
+      final String? driverId = carDoc.data()?['driverId'];
+
+      // Unassign the driver from car
       await carRepository.unAssignDriverToCar(carId);
+
+      // IMPORTANT: Also update the driver's status if a driver was assigned
+      if (driverId != null && driverId.isNotEmpty) {
+        final driverRepository = Get.find<DriverRepositoryImp>();
+        final driverDoc =
+            await _firestore.collection('drivers').doc(driverId).get();
+        if (driverDoc.exists) {
+          final driver = CarDriver.fromDocument(driverDoc.data()!);
+          final updatedDriver = driver.copyWith(isAssigned: false);
+          await driverRepository.updateDriver(updatedDriver);
+        }
+      }
+
+      // Refresh data
+      await getCars();
+      await Get.find<DriverController>().getDrivers();
+
+      // Refresh dashboard stats if controller exists
+      if (Get.isRegistered<DashboardStatsController>()) {
+        Get.find<DashboardStatsController>().refreshStats();
+      }
+
       isAssigningDriver = false;
       update();
-      Get.back();
       Get.snackbar(
-          "Driver Unassigned", "Driver has been unassigned to car successfully",
+          "Driver Unassigned", "Driver has been unassigned successfully",
           snackPosition: SnackPosition.BOTTOM);
     } catch (e) {
       isAssigningDriver = false;
       update();
-      Get.snackbar("Error", "An error occurred while unassigning driver to car",
+      Get.snackbar("Error", "An error occurred while unassigning driver",
           snackPosition: SnackPosition.BOTTOM);
       rethrow;
     }
@@ -152,6 +327,11 @@ class CarController extends GetxController {
       isCarDeleting = false;
       deleteCarId = '';
       update();
+
+      // Refresh dashboard stats if controller exists
+      if (Get.isRegistered<DashboardStatsController>()) {
+        Get.find<DashboardStatsController>().refreshStats();
+      }
     } catch (e) {
       isCarDeleting = false;
       deleteCarId = '';

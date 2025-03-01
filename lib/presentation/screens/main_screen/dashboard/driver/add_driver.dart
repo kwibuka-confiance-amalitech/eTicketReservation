@@ -273,7 +273,7 @@ class _AddDriverState extends State<AddDriver>
             _buildInputField(
               controller: controller.phoneController,
               label: "Phone Number",
-              hint: "+1 234 567 890",
+              hint: "+250 894 567",
               icon: Icons.phone_outlined,
               keyboardType: TextInputType.phone,
               textInputAction: TextInputAction.next,
@@ -312,7 +312,7 @@ class _AddDriverState extends State<AddDriver>
             _buildInputField(
               controller: controller.addressController,
               label: "Street Address",
-              hint: "123 Main St",
+              hint: "123KG, Kigali",
               icon: Icons.location_on_outlined,
               textInputAction: TextInputAction.next,
             ),
@@ -320,7 +320,7 @@ class _AddDriverState extends State<AddDriver>
             _buildInputField(
               controller: controller.cityController,
               label: "City",
-              hint: "New York",
+              hint: "Kigali",
               icon: Icons.location_city_outlined,
               textInputAction: TextInputAction.done,
             ),

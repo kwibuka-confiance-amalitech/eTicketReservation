@@ -1,6 +1,7 @@
 import 'package:car_ticket/controller/dashboard/journey_destination_controller.dart';
 import 'package:car_ticket/domain/models/destination/journey_destination.dart';
 import 'package:car_ticket/presentation/screens/main_screen/dashboard/destination/add_destination.dart';
+import 'package:car_ticket/presentation/screens/main_screen/dashboard/destination/edit_destination.dart';
 import 'package:car_ticket/presentation/widgets/dashboard/assignings/assign_car_to_destination.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -692,119 +693,220 @@ class DestinationCard extends StatelessWidget {
               ),
               // Route information
               Expanded(
-                child: Padding(
-                  padding: EdgeInsets.all(16.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.location_on,
-                              size: 16, color: Colors.red),
-                          SizedBox(width: 4.w),
-                          Text(
-                            "From: ${destination.from}",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14.sp,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 4.h),
-                      Row(
-                        children: [
-                          const Icon(Icons.flag, size: 16, color: Colors.green),
-                          SizedBox(width: 4.w),
-                          Text(
-                            "To: ${destination.to}",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14.sp,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 8.h),
-                      Text(
-                        destination.description,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 13.sp,
-                        ),
-                      ),
-                      const Spacer(),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Stack(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(16.w),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.attach_money,
-                                  color: Theme.of(context).primaryColor,
-                                  size: 16),
+                              const Icon(Icons.location_on,
+                                  size: 16, color: Colors.red),
                               SizedBox(width: 4.w),
                               Text(
-                                NumberFormat.currency(
-                                  symbol: 'RWF ',
-                                  decimalDigits: 0,
-                                ).format(double.parse(destination.price)),
+                                "From: ${destination.from}",
                                 style: TextStyle(
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w600,
                                   fontSize: 14.sp,
-                                  color: Theme.of(context).primaryColor,
                                 ),
                               ),
                             ],
                           ),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 8.w,
-                              vertical: 4.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: destination.isAssigned
-                                  ? Colors.green.withOpacity(0.1)
-                                  : Colors.orange.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  destination.isAssigned
-                                      ? Icons.check_circle
-                                      : Icons.cancel_outlined,
-                                  color: destination.isAssigned
-                                      ? Colors.green
-                                      : Colors.orange,
-                                  size: 14,
+                          SizedBox(height: 4.h),
+                          Row(
+                            children: [
+                              const Icon(Icons.flag,
+                                  size: 16, color: Colors.green),
+                              SizedBox(width: 4.w),
+                              Text(
+                                "To: ${destination.to}",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14.sp,
                                 ),
-                                SizedBox(width: 4.w),
-                                Text(
-                                  destination.isAssigned
-                                      ? 'Car Assigned'
-                                      : 'No Car',
-                                  style: TextStyle(
-                                    color: destination.isAssigned
-                                        ? Colors.green
-                                        : Colors.orange,
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.bold,
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 8.h),
+                          Text(
+                            destination.description,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 13.sp,
+                            ),
+                          ),
+                          const Spacer(),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.attach_money,
+                                      color: Theme.of(context).primaryColor,
+                                      size: 16),
+                                  SizedBox(width: 4.w),
+                                  Text(
+                                    NumberFormat.currency(
+                                      symbol: 'RWF ',
+                                      decimalDigits: 0,
+                                    ).format(double.parse(destination.price)),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14.sp,
+                                      color: Theme.of(context).primaryColor,
+                                    ),
                                   ),
+                                ],
+                              ),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8.w,
+                                  vertical: 4.h,
                                 ),
-                              ],
-                            ),
+                                decoration: BoxDecoration(
+                                  color: destination.isAssigned
+                                      ? Colors.green.withOpacity(0.1)
+                                      : Colors.orange.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      destination.isAssigned
+                                          ? Icons.check_circle
+                                          : Icons.cancel_outlined,
+                                      color: destination.isAssigned
+                                          ? Colors.green
+                                          : Colors.orange,
+                                      size: 14,
+                                    ),
+                                    SizedBox(width: 4.w),
+                                    Text(
+                                      destination.isAssigned
+                                          ? 'Car Assigned'
+                                          : 'No Car',
+                                      style: TextStyle(
+                                        color: destination.isAssigned
+                                            ? Colors.green
+                                            : Colors.orange,
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+
+                    // Add the popup menu in the top-right corner
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: _buildPopupMenu(context),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPopupMenu(BuildContext context) {
+    return GetBuilder<JourneyDestinationController>(builder: (controller) {
+      return PopupMenuButton<String>(
+        icon: Icon(
+          Icons.more_vert,
+          color: Colors.grey[700],
+        ),
+        onSelected: (value) {
+          if (value == 'edit') {
+            _showEditDestinationModal(context);
+          } else if (value == 'delete') {
+            _showDeleteConfirmation(context, controller);
+          }
+        },
+        itemBuilder: (context) => [
+          const PopupMenuItem(
+            value: 'edit',
+            child: Row(
+              children: [
+                Icon(Icons.edit, size: 18),
+                SizedBox(width: 8),
+                Text('Edit Route'),
+              ],
+            ),
+          ),
+          const PopupMenuItem(
+            value: 'delete',
+            child: Row(
+              children: [
+                Icon(Icons.delete, color: Colors.red, size: 18),
+                SizedBox(width: 8),
+                Text('Delete Route', style: TextStyle(color: Colors.red)),
+              ],
+            ),
+          ),
+        ],
+      );
+    });
+  }
+
+  void _showEditDestinationModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: EditDestinationWidget(destination: destination),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(
+      BuildContext context, JourneyDestinationController controller) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Route'),
+        content: Text(
+            'Are you sure you want to delete "${destination.description}"? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              controller.deleteDestination(destination);
+            },
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -822,17 +924,53 @@ class DestinationDetailsView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Drag handle
+        // Drag handle and actions row
         Container(
-          width: 50.w,
-          height: 5.h,
-          margin: EdgeInsets.symmetric(vertical: 10.h),
-          decoration: BoxDecoration(
-            color: Colors.grey[300],
-            borderRadius: BorderRadius.circular(10),
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Drag handle
+              Container(
+                width: 50.w,
+                height: 5.h,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+
+              // Action buttons
+              Row(
+                children: [
+                  // Edit button
+                  IconButton(
+                    icon:
+                        Icon(Icons.edit, color: Theme.of(context).primaryColor),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _showEditDestinationModal(context);
+                    },
+                  ),
+
+                  // Delete button
+                  GetBuilder<JourneyDestinationController>(
+                      builder: (controller) {
+                    return IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showDeleteConfirmation(context, controller);
+                      },
+                    );
+                  }),
+                ],
+              ),
+            ],
           ),
         ),
 
+        // Rest of the DestinationDetailsView remains the same...
         // Make the content scrollable
         Expanded(
           child: SingleChildScrollView(
@@ -1109,6 +1247,55 @@ class DestinationDetailsView extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _showEditDestinationModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: EditDestinationWidget(destination: destination),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(
+      BuildContext context, JourneyDestinationController controller) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Route'),
+        content: Text(
+            'Are you sure you want to delete "${destination.description}"? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              controller.deleteDestination(destination);
+            },
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

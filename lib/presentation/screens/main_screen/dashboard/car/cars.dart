@@ -2,6 +2,8 @@ import 'package:car_ticket/controller/dashboard/car_controller.dart';
 import 'package:car_ticket/domain/models/car/car.dart';
 import 'package:car_ticket/presentation/screens/main_screen/dashboard/car/add_car.dart';
 import 'package:car_ticket/presentation/screens/main_screen/dashboard/car/assign_driver.dart';
+import 'package:car_ticket/presentation/screens/main_screen/dashboard/car/edit_car.dart';
+import 'package:car_ticket/presentation/widgets/dashboard/car_seat_status.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
@@ -37,8 +39,8 @@ class _CarsScreenState extends State<CarsScreen> {
           slivers: [
             _buildAppBar(context),
             _buildSearchBar(),
-            _buildCategoryFilter(),
-            _buildStatCards(),
+            // _buildCategoryFilter(),
+            // _buildStatCards(),
             _buildCarsList(),
           ],
         ),
@@ -106,7 +108,7 @@ class _CarsScreenState extends State<CarsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Vehicle Fleet',
+                        'Cars Management',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 28.sp,
@@ -620,39 +622,9 @@ class EnhancedCarCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Choose appropriate icon based on car type
-    IconData vehicleIcon;
-    switch (car.type.toLowerCase()) {
-      case 'sedan':
-        vehicleIcon = Icons.directions_car;
-        break;
-      case 'suv':
-        vehicleIcon = Icons.directions_car;
-        break;
-      case 'bus':
-        vehicleIcon = Icons.directions_bus;
-        break;
-      case 'van':
-        vehicleIcon = Icons.airport_shuttle;
-        break;
-      case 'coaster':
-        vehicleIcon = Icons.directions_bus;
-        break;
-      default:
-        vehicleIcon = Icons.directions_car;
-    }
-
-    // Generate color based on car type for visual distinction
-    final int typeHash = car.type.hashCode;
-    final List<Color> cardColors = [
-      Colors.blue.shade400,
-      Colors.purple.shade400,
-      Colors.teal.shade400,
-      Colors.orange.shade400,
-      Colors.indigo.shade400,
-    ];
-    final Color cardColor = cardColors[typeHash.abs() % cardColors.length];
     final bool isAssigned = car.isAssigned;
+    final Color cardColor = isAssigned ? Colors.orange : Colors.green;
+    final IconData vehicleIcon = _getVehicleIconForType(car.type);
 
     return Card(
       margin: EdgeInsets.only(bottom: 16.h),
@@ -667,6 +639,7 @@ class EnhancedCarCard extends StatelessWidget {
           padding: EdgeInsets.all(16.w),
           child: Row(
             children: [
+              // Vehicle icon container (keep as is)
               Container(
                 padding: EdgeInsets.all(16.w),
                 decoration: BoxDecoration(
@@ -680,10 +653,13 @@ class EnhancedCarCard extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 16.w),
+
+              // Vehicle details
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Vehicle name and status
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -715,6 +691,8 @@ class EnhancedCarCard extends StatelessWidget {
                       ],
                     ),
                     SizedBox(height: 8.h),
+
+                    // Plate number and seats
                     Row(
                       children: [
                         _buildInfoChip(Icons.credit_card, car.plateNumber),
@@ -724,6 +702,8 @@ class EnhancedCarCard extends StatelessWidget {
                       ],
                     ),
                     SizedBox(height: 8.h),
+
+                    // Model and year
                     Row(
                       children: [
                         Icon(
@@ -755,9 +735,36 @@ class EnhancedCarCard extends StatelessWidget {
                         ),
                       ],
                     ),
+
+                    // Add driver information row if assigned
+                    if (car.isAssigned && car.driverName.isNotEmpty) ...[
+                      SizedBox(height: 8.h),
+                      Divider(height: 8.h, color: Colors.grey[200]),
+                      SizedBox(height: 8.h),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.person,
+                            size: 14.sp,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                          SizedBox(width: 4.w),
+                          Text(
+                            'Driver: ${car.driverName}',
+                            style: TextStyle(
+                              color: Theme.of(context).primaryColor,
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
+
+              // Arrow icon
               Icon(
                 Icons.chevron_right,
                 color: Colors.grey[400],
@@ -802,290 +809,628 @@ class CarDetailsView extends StatelessWidget {
   final ExcelCar car;
 
   const CarDetailsView({
-    super.key,
     required this.car,
+    super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Get next maintenance date in relative format
-    String nextMaintenanceText = "Not scheduled";
-    final daysUntil = car.nextMaintenance.difference(DateTime.now()).inDays;
-    if (daysUntil < 0) {
-      nextMaintenanceText = "Overdue by ${daysUntil.abs()} days";
-    } else if (daysUntil == 0) {
-      nextMaintenanceText = "Due today";
-    } else if (daysUntil < 7) {
-      nextMaintenanceText = "Due in $daysUntil days";
-    } else if (daysUntil < 30) {
-      nextMaintenanceText = "Due in ${(daysUntil / 7).floor()} weeks";
-    } else {
-      nextMaintenanceText = "Due in ${(daysUntil / 30).floor()} months";
-    }
-
     return Column(
       children: [
-        // Drag handle
+        // Top drag handle
         Container(
-          width: 50.w,
+          width: 40.w,
           height: 5.h,
-          margin: EdgeInsets.symmetric(vertical: 10.h),
+          margin: EdgeInsets.symmetric(vertical: 12.h),
           decoration: BoxDecoration(
             color: Colors.grey[300],
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(2.5),
           ),
         ),
 
-        // Car illustration
-        Container(
-          height: 120.h,
-          padding: EdgeInsets.symmetric(vertical: 16.h),
-          child: Center(
-            child: Icon(
-              _getCarIcon(car.type),
-              size: 80.sp,
-              color: Theme.of(context).primaryColor,
-            ),
-          ),
-        ),
-
-        // Car details
+        // Main scrollable content
         Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(30),
-                topRight: Radius.circular(30),
-              ),
-            ),
-            padding: EdgeInsets.all(24.w),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      car.name,
-                      style: TextStyle(
-                        fontSize: 24.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                      decoration: BoxDecoration(
-                        color: car.isAssigned
-                            ? Colors.orange.withOpacity(0.1)
-                            : Colors.green.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        car.isAssigned ? 'In Use' : 'Available',
+                // Vehicle header info
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Car name and basic info
+                      Text(
+                        car.name,
                         style: TextStyle(
-                          color: car.isAssigned ? Colors.orange : Colors.green,
-                          fontSize: 14.sp,
+                          fontSize: 20.sp,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                      SizedBox(height: 8.h),
 
-                SizedBox(height: 8.h),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.category,
-                      size: 16.sp,
-                      color: Colors.grey[600],
-                    ),
-                    SizedBox(width: 8.w),
-                    Text(
-                      '${car.model} | ${car.year}',
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        color: Colors.grey[600],
+                      // License plate
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10.w,
+                          vertical: 4.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(4.r),
+                        ),
+                        child: Text(
+                          car.plateNumber,
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                      SizedBox(height: 16.h),
 
-                SizedBox(height: 24.h),
-                Text(
-                  'Vehicle Details',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.bold,
+                      // Vehicle details section
+                      Text(
+                        'Vehicle Information',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                    ],
                   ),
                 ),
+
+                // Vehicle details in a grid
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    childAspectRatio: 2.5,
+                    crossAxisSpacing: 16.w,
+                    mainAxisSpacing: 16.h,
+                    children: [
+                      _buildDetailItem(Icons.category, 'Type', car.type),
+                      _buildDetailItem(Icons.palette, 'Color', car.color),
+                      _buildDetailItem(Icons.car_repair, 'Model', car.model),
+                      _buildDetailItem(Icons.calendar_today, 'Year', car.year),
+                      _buildDetailItem(Icons.airline_seat_recline_normal,
+                          'Seats', car.seatNumbers.toString()),
+                    ],
+                  ),
+                ),
+
                 SizedBox(height: 16.h),
 
-                _buildDetailItem(
-                  context,
-                  icon: Icons.credit_card,
-                  label: 'License Plate',
-                  value: car.plateNumber,
-                ),
-
-                _buildDetailItem(
-                  context,
-                  icon: Icons.airline_seat_recline_normal,
-                  label: 'Seating Capacity',
-                  value: '${car.seatNumbers} passengers',
-                ),
-
-                _buildDetailItem(
-                  context,
-                  icon: Icons.speed,
-                  label: 'Mileage',
-                  value: '${car.mileage.toStringAsFixed(0)} km',
-                ),
-
-                _buildDetailItem(
-                  context,
-                  icon: Icons.build,
-                  label: 'Next Maintenance',
-                  value: nextMaintenanceText,
-                ),
-
+                // Driver info if assigned
                 if (car.isAssigned && car.driverName.isNotEmpty)
-                  _buildDetailItem(
-                    context,
-                    icon: Icons.person,
-                    label: 'Assigned Driver',
-                    value: car.driverName,
-                  ),
+                  _buildAssignedDriverSection(context),
 
                 SizedBox(height: 24.h),
 
-                // Action buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (context) => DraggableScrollableSheet(
-                              initialChildSize: 0.75,
-                              minChildSize: 0.5,
-                              maxChildSize: 0.95,
-                              builder: (context, scrollController) =>
-                                  AssignDriverSheet(car: car),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).primaryColor,
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(vertical: 12.h),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        icon: const Icon(Icons.person_add),
-                        label: Text(
-                            car.isAssigned ? 'Change Driver' : 'Assign Driver'),
-                      ),
+                // Seat status widget
+                Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  child: Card(
+                    elevation: 0,
+                    color: Colors.grey[50],
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                      side: BorderSide(color: Colors.grey[300]!),
                     ),
-                    SizedBox(width: 16.w),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          // Implement edit functionality
-                          Navigator.pop(context);
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Theme.of(context).primaryColor,
-                          side:
-                              BorderSide(color: Theme.of(context).primaryColor),
-                          padding: EdgeInsets.symmetric(vertical: 12.h),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        icon: const Icon(Icons.edit),
-                        label: const Text('Edit Details'),
-                      ),
+                    child: Padding(
+                      padding: EdgeInsets.all(16.w),
+                      child: CarSeatStatusWidget(car: car),
                     ),
-                  ],
+                  ),
                 ),
+
+                // Extra space at bottom to ensure everything is visible
+                SizedBox(height: 80.h),
               ],
             ),
+          ),
+        ),
+
+        // Action buttons in fixed position at bottom
+        Container(
+          padding: EdgeInsets.all(16.w),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                offset: const Offset(0, -4),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Edit and Delete buttons row
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) => Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(20),
+                                topRight: Radius.circular(20),
+                              ),
+                            ),
+                            padding: EdgeInsets.only(
+                              bottom: MediaQuery.of(context).viewInsets.bottom,
+                            ),
+                            child: EditCarWidget(car: car),
+                          ),
+                        );
+                      },
+                      icon: Icon(
+                        Icons.edit,
+                        size: 18.sp,
+                        color: Colors.blue,
+                      ),
+                      label: Text(
+                        'Edit Vehicle',
+                        style: TextStyle(
+                          color: Colors.blue,
+                          fontSize: 14.sp,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.blue),
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: GetBuilder<CarController>(
+                      builder: (carController) {
+                        return OutlinedButton.icon(
+                          onPressed: carController.isCarDeleting
+                              ? null
+                              : () {
+                                  // Show confirmation dialog first
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Delete Vehicle'),
+                                      content: Text(
+                                        'Are you sure you want to delete ${car.name}? This action cannot be undone.',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () async {
+                                            Navigator.pop(
+                                                context); // Close dialog
+                                            Navigator.pop(
+                                                context); // Close details view
+                                            await carController.deleteCar(car);
+                                          },
+                                          child: const Text(
+                                            'Delete',
+                                            style: TextStyle(color: Colors.red),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                          icon: Icon(
+                            Icons.delete,
+                            size: 18.sp,
+                            color: Colors.red,
+                          ),
+                          label: Text(
+                            carController.isCarDeleting &&
+                                    carController.deleteCarId == car.id
+                                ? 'Deleting...'
+                                : 'Delete Vehicle',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 14.sp,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.red),
+                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 12.h),
+
+              // Driver assignment button
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => DraggableScrollableSheet(
+                      initialChildSize: 0.75,
+                      minChildSize: 0.5,
+                      maxChildSize: 0.95,
+                      builder: (context, scrollController) =>
+                          AssignDriverSheet(car: car),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                icon: const Icon(Icons.person_add),
+                label: Text(car.isAssigned ? 'Change Driver' : 'Assign Driver'),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
 
-  Widget _buildDetailItem(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 16.h),
+  Widget _buildDetailItem(IconData icon, String label, String value) {
+    return Container(
+      padding: EdgeInsets.all(10.w),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
       child: Row(
         children: [
-          Container(
-            padding: EdgeInsets.all(10.w),
-            decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              icon,
-              color: Theme.of(context).primaryColor,
-              size: 22.sp,
-            ),
-          ),
-          SizedBox(width: 16.w),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14.sp,
+          Icon(icon, size: 18.sp, color: Colors.grey[700]),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: Colors.grey[600],
+                  ),
                 ),
-              ),
-              SizedBox(height: 4.h),
-              Text(
-                value,
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 16.sp,
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14.sp,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  maxLines: 1,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  IconData _getCarIcon(String type) {
-    switch (type.toLowerCase()) {
-      case 'sedan':
-        return Icons.directions_car;
-      case 'suv':
-        return Icons.directions_car;
-      case 'bus':
-        return Icons.directions_bus;
-      case 'van':
-        return Icons.airport_shuttle;
-      case 'coaster':
-        return Icons.directions_bus;
-      default:
-        return Icons.directions_car;
-    }
+  Widget _buildAssignedDriverSection(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Driver',
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Container(
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: Colors.grey[300]!),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                // Driver avatar
+                CircleAvatar(
+                  radius: 30.r,
+                  backgroundColor:
+                      Theme.of(context).primaryColor.withOpacity(0.2),
+                  child: car.driverName.isNotEmpty
+                      ? Text(
+                          car.driverName[0].toUpperCase(),
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 24.sp,
+                          ),
+                        )
+                      : Icon(
+                          Icons.person,
+                          size: 30.sp,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                ),
+                SizedBox(width: 16.w),
+                // Driver details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        car.driverName,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18.sp,
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 8.w, vertical: 3.h),
+                        decoration: BoxDecoration(
+                          color:
+                              Theme.of(context).primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20.r),
+                        ),
+                        child: Text(
+                          'Assigned Driver',
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Change driver button
+                IconButton(
+                  icon: Icon(
+                    Icons.swap_horiz,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  tooltip: 'Change Driver',
+                  onPressed: () {
+                    Navigator.pop(context);
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => DraggableScrollableSheet(
+                        initialChildSize: 0.75,
+                        minChildSize: 0.5,
+                        maxChildSize: 0.95,
+                        builder: (context, scrollController) =>
+                            AssignDriverSheet(car: car),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          // Unassign button
+          SizedBox(height: 8.h),
+          GetBuilder<CarController>(
+            builder: (controller) {
+              return OutlinedButton.icon(
+                onPressed: controller.isAssigningDriver
+                    ? null
+                    : () {
+                        // Show confirmation dialog
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Remove Driver'),
+                            content: Text(
+                              'Are you sure you want to unassign ${car.driverName} from this vehicle?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  Navigator.pop(context); // Close dialog
+                                  Navigator.pop(context); // Close details
+                                  await controller.unAssignDriverToCar(
+                                    carId: car.id,
+                                  );
+                                },
+                                child: const Text(
+                                  'Remove',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                icon: Icon(Icons.person_remove, color: Colors.red, size: 18.sp),
+                label: Text(
+                  'Unassign Driver',
+                  style: TextStyle(color: Colors.red),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.red),
+                  padding:
+                      EdgeInsets.symmetric(vertical: 10.h, horizontal: 16.w),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoDriverSection(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'No Driver Assigned',
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Container(
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 60.w,
+                  height: 60.h,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.person_off,
+                    color: Colors.grey[500],
+                    size: 30.sp,
+                  ),
+                ),
+                SizedBox(width: 16.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'No Driver',
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        'Assign a driver to this vehicle',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14.sp,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Assign button
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => DraggableScrollableSheet(
+                        initialChildSize: 0.75,
+                        minChildSize: 0.5,
+                        maxChildSize: 0.95,
+                        builder: (context, scrollController) =>
+                            AssignDriverSheet(car: car),
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.person_add, size: 16.sp),
+                  label: Text('Assign'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    foregroundColor: Colors.white,
+                    padding:
+                        EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Add this function at the end of the file, outside of any class
+// or alternatively as a static method inside your EnhancedCarCard class
+IconData _getVehicleIconForType(String type) {
+  switch (type.toLowerCase()) {
+    case 'bus':
+      return Icons.directions_bus;
+    case 'sedan':
+      return Icons.directions_car;
+    case 'suv':
+      return Icons.time_to_leave;
+    case 'van':
+      return Icons.airport_shuttle;
+    case 'coaster':
+      return Icons.directions_bus_filled;
+    case 'truck':
+      return Icons.local_shipping;
+    case 'minibus':
+      return Icons.directions_transit;
+    default:
+      return Icons.directions_car;
   }
 }

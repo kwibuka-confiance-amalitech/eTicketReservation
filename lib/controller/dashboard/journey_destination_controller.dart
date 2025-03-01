@@ -12,6 +12,7 @@ class JourneyDestinationController extends GetxController {
   bool isAssigningCar = false;
   String deleteDestinationId = '';
   bool isDestinationDeleting = false;
+  bool isDestinationUpdating = false;
 
   List<JourneyDestination> destinations = [];
 
@@ -106,10 +107,29 @@ class JourneyDestinationController extends GetxController {
     }
   }
 
-  Future updateDestination(JourneyDestination destination) async {
+  Future<void> updateDestination(JourneyDestination destination) async {
     try {
+      isDestinationUpdating = true;
+      update();
+
       await journeyRepository.updateDestination(destination);
+
+      // Refresh destination list
+      await getDestinations();
+
+      isDestinationUpdating = false;
+      update();
+      return;
     } catch (e) {
+      isDestinationUpdating = false;
+      update();
+      Get.snackbar(
+        "Error",
+        "Failed to update destination: ${e.toString()}",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+      );
       rethrow;
     }
   }
@@ -205,5 +225,19 @@ class JourneyDestinationController extends GetxController {
     final minute = finalMinute - initialMinute;
 
     return "$hour:$minute";
+  }
+
+  List<String> getUniqueLocations() {
+    // Extract all from and to locations
+    final Set<String> uniqueLocations = <String>{};
+
+    for (var destination in destinations) {
+      uniqueLocations.add(destination.from);
+      uniqueLocations.add(destination.to);
+    }
+
+    // Convert to sorted list
+    final locations = uniqueLocations.toList()..sort();
+    return locations;
   }
 }

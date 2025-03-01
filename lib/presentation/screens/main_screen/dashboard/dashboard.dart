@@ -69,7 +69,7 @@ class CarTicketDashboard extends StatelessWidget {
       body: RefreshIndicator(
         onRefresh: () async {
           final controller = Get.find<CustomersController>();
-          // await controller.refreshCustomers();
+          controller.getCustomers();
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -79,7 +79,7 @@ class CarTicketDashboard extends StatelessWidget {
               const MainCard(),
               _buildSectionTitle("Quick Actions"),
               _buildDashboardItems(context),
-              _buildSectionTitle("Recent Activity"),
+              // _buildSectionTitle("Recent Activity"),
               _buildActivityTimeline(context),
               _buildSectionTitle("Recent Customers"),
               _buildCustomersList(),
@@ -99,7 +99,7 @@ class CarTicketDashboard extends StatelessWidget {
         closedBuilder: (context, openContainer) => FloatingActionButton(
           backgroundColor: Theme.of(context).primaryColor,
           onPressed: openContainer,
-          child: const Icon(Icons.analytics),
+          child: const Icon(Icons.analytics, color: Colors.white),
         ),
       ),
     );
@@ -401,9 +401,9 @@ class CarTicketDashboard extends StatelessWidget {
           );
         }
 
-        if (controller.activityLogs.isEmpty) {
-          return _buildEmptyActivityState();
-        }
+        // if (controller.activityLogs.isEmpty) {
+        //   return _buildEmptyActivityState();
+        // }
 
         return Container(
           padding: EdgeInsets.symmetric(horizontal: 16.w),

@@ -86,7 +86,7 @@ class CarAvailableDetails extends StatelessWidget {
                               Container(
                                 margin:
                                     const EdgeInsets.only(top: 40, bottom: 20),
-                                child: Text('Select your destination',
+                                child: Text('Select your favourite seat(s)',
                                     style: TextStyle(
                                         fontSize: 16.sp,
                                         fontWeight: FontWeight.bold,
@@ -219,20 +219,24 @@ class CarAvailableDetails extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 10.0),
-                          if (selectedDestinationController.selectedDestination.value.startDate?.isNotEmpty ?? false) ...[
+                          if (selectedDestinationController.selectedDestination
+                                  .value.startDate?.isNotEmpty ??
+                              false) ...[
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 10.0),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
-                                    Icons.calendar_today, 
+                                    Icons.calendar_today,
                                     size: 16.sp,
                                     color: Colors.grey[600],
                                   ),
                                   SizedBox(width: 8.w),
                                   Text(
-                                    _formatDate(selectedDestinationController.selectedDestination.value.startDate!),
+                                    _formatDate(selectedDestinationController
+                                        .selectedDestination.value.startDate!),
                                     style: TextStyle(
                                       fontSize: 14.sp,
                                       color: Colors.grey[800],
@@ -249,13 +253,11 @@ class CarAvailableDetails extends StatelessWidget {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                
                                 Text(
                                     "Price: ${selectedDestinationController.selectedDestination.value.price.toString()} RWF"),
                               ],
                             ),
                           ),
-                       
                         ]),
                       ),
                     )),

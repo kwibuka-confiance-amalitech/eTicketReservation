@@ -1,193 +1,320 @@
-import 'package:car_ticket/presentation/widgets/report_widgets/data_table_card.dart';
-import 'package:car_ticket/presentation/widgets/report_widgets/filter_card.dart';
-import 'package:car_ticket/presentation/widgets/report_widgets/summary_card.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'package:car_ticket/controller/dashboard/report_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 class MembersReportTab extends StatefulWidget {
   final DateTime startDate;
   final DateTime endDate;
 
-  const MembersReportTab(
-      {super.key, required this.startDate, required this.endDate});
+  const MembersReportTab({
+    required this.startDate,
+    required this.endDate,
+    super.key,
+  });
 
   @override
   State<MembersReportTab> createState() => _MembersReportTabState();
 }
 
 class _MembersReportTabState extends State<MembersReportTab> {
-  String _selectedFilter = 'All Members';
-  final List<String> _filters = [
-    'All Members',
-    'New Members',
-    'Active Members',
-    'Inactive Members'
-  ];
+  late ReportController controller;
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.find<ReportController>();
+
+    // Use a post-frame callback to fetch data after the first build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_isInitialized) {
+        controller.getMembersReportData(widget.startDate, widget.endDate);
+        _isInitialized = true;
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(MembersReportTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Fetch new data if date range changes
+    if (oldWidget.startDate != widget.startDate ||
+        oldWidget.endDate != widget.endDate) {
+      controller.getMembersReportData(widget.startDate, widget.endDate);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          FilterCard(
-            title: 'Member Type',
-            selectedFilter: _selectedFilter,
-            filters: _filters,
-            onFilterChanged: (value) {
-              setState(() {
-                _selectedFilter = value;
-              });
-            },
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: SummaryCard(
-                  title: 'Total Members',
-                  value: '412',
-                  icon: Icons.people,
-                  color: Colors.purple,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: SummaryCard(
-                  title: 'New Members',
-                  value: '24',
-                  icon: Icons.person_add,
-                  color: Colors.orange,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildMembershipChart(),
-          const SizedBox(height: 16),
-          DataTableCard(
-            title: 'Member List',
-            columns: const ['Name', 'Email', 'Join Date', 'Bookings'],
-            rows: [
-              ['James Smith', 'james@example.com', 'Jan 15, 2025', '5'],
-              ['Mary Johnson', 'mary@example.com', 'Jan 20, 2025', '3'],
-              ['Robert Brown', 'robert@example.com', 'Jan 25, 2025', '7'],
-              ['Patricia Davis', 'patricia@example.com', 'Feb 1, 2025', '2'],
-              ['Michael Miller', 'michael@example.com', 'Feb 5, 2025', '4'],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMembershipChart() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 5,
-          ),
-        ],
-      ),
-      height: 300,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Member Registrations',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: LineChart(
-              LineChartData(
-                lineTouchData: LineTouchData(
-                  touchTooltipData: LineTouchTooltipData(
-                    tooltipBgColor: Colors.grey.shade800,
-                  ),
-                  handleBuiltInTouches: true,
-                ),
-                gridData: const FlGridData(
-                  show: true,
-                ),
-                titlesData: FlTitlesData(
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 30,
-                      getTitlesWidget: (value, meta) {
-                        const titles = [
-                          'Jan',
-                          'Feb',
-                          'Mar',
-                          'Apr',
-                          'May',
-                          'Jun'
-                        ];
-                        if (value >= 0 && value < titles.length) {
-                          return SideTitleWidget(
-                            axisSide: meta.axisSide,
-                            child: Text(titles[value.toInt()]),
-                          );
-                        }
-                        return const SizedBox();
-                      },
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 40,
-                      getTitlesWidget: (value, meta) {
-                        return SideTitleWidget(
-                          axisSide: meta.axisSide,
-                          child: Text(value.toInt().toString()),
-                        );
-                      },
-                    ),
-                  ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                ),
-                borderData: FlBorderData(
-                  show: true,
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: const [
-                      FlSpot(0, 15),
-                      FlSpot(1, 25),
-                      FlSpot(2, 18),
-                      FlSpot(3, 30),
-                      FlSpot(4, 27),
-                      FlSpot(5, 24),
-                    ],
-                    isCurved: true,
-                    color: Colors.purple,
-                    barWidth: 3,
-                    dotData: const FlDotData(show: true),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: Colors.purple.withOpacity(0.2),
+    return GetBuilder<ReportController>(
+      init: null, // We already initialized in initState
+      builder: (controller) {
+        return Column(
+          children: [
+            // Date range info
+            Container(
+              padding: EdgeInsets.all(16.w),
+              color: Colors.grey[100],
+              child: Row(
+                children: [
+                  Icon(Icons.date_range, color: Colors.grey[700]),
+                  SizedBox(width: 10.w),
+                  Text(
+                    '${DateFormat('MMM dd, yyyy').format(widget.startDate)} - ${DateFormat('MMM dd, yyyy').format(widget.endDate)}',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
               ),
+            ),
+
+            // Summary card
+            Padding(
+              padding: EdgeInsets.all(16.w),
+              child: Card(
+                elevation: 2,
+                child: Padding(
+                  padding: EdgeInsets.all(16.w),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(10.w),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Icon(
+                          Icons.people,
+                          color: Colors.blue,
+                          size: 24.sp,
+                        ),
+                      ),
+                      SizedBox(width: 16.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'New Members',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 14.sp,
+                              ),
+                            ),
+                            SizedBox(height: 4.h),
+                            Text(
+                              controller.isLoadingMembers
+                                  ? '...'
+                                  : controller.membersData.length.toString(),
+                              style: TextStyle(
+                                fontSize: 20.sp,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Data table
+            Expanded(
+              child: controller.isLoadingMembers
+                  ? const Center(child: CircularProgressIndicator())
+                  : controller.membersData.isEmpty
+                      ? _buildEmptyState()
+                      : Padding(
+                          padding: EdgeInsets.all(16.w),
+                          child: Card(
+                            elevation: 2,
+                            child: ListView(
+                              children: [
+                                // Table header
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 16.w, vertical: 12.h),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    border: Border(
+                                      bottom: BorderSide(
+                                        color: Colors.grey[300]!,
+                                        width: 1,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 3,
+                                        child: Text(
+                                          'Name',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14.sp,
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 3,
+                                        child: Text(
+                                          'Email',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14.sp,
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                          'Join Date',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14.sp,
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 1,
+                                        child: Text(
+                                          'Bookings',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14.sp,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                // Table rows
+                                ...controller.membersData.map(
+                                  (member) => Container(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 16.w, vertical: 16.h),
+                                    decoration: BoxDecoration(
+                                      border: Border(
+                                        bottom: BorderSide(
+                                          color: Colors.grey[200]!,
+                                          width: 1,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          flex: 3,
+                                          child: Row(
+                                            children: [
+                                              CircleAvatar(
+                                                radius: 14.r,
+                                                backgroundColor: Colors.blue,
+                                                child: Text(
+                                                  member.name.isNotEmpty
+                                                      ? member.name[0]
+                                                      : '?',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 12.sp,
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(width: 8.w),
+                                              Expanded(
+                                                child: Text(
+                                                  member.name.isNotEmpty
+                                                      ? member.name
+                                                      : 'Unknown',
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                      fontSize: 14.sp),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Expanded(
+                                          flex: 3,
+                                          child: Text(
+                                            member.email,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(fontSize: 14.sp),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          flex: 2,
+                                          child: Text(
+                                            _formatDate(member.createdAt),
+                                            style: TextStyle(fontSize: 14.sp),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          flex: 1,
+                                          child: Text(
+                                            (member.bookingsCount ?? 0)
+                                                .toString(),
+                                            style: TextStyle(
+                                              fontSize: 14.sp,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return 'N/A';
+    return DateFormat('MMM dd, yyyy').format(date);
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.people,
+            size: 64.sp,
+            color: Colors.grey[400],
+          ),
+          SizedBox(height: 16.h),
+          Text(
+            'No members data available',
+            style: TextStyle(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[700],
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            'There are no new members registered\nwithin the selected date range',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14.sp,
+              color: Colors.grey[600],
             ),
           ),
         ],

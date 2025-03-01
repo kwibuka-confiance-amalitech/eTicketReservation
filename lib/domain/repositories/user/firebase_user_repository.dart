@@ -56,10 +56,23 @@ class FirebaseUserRepository extends UserRepository {
   @override
   Future<void> setUserData({required MyUser user}) async {
     try {
-      await userCollection.doc(user.id).set(user.toEntity().toDocument());
+      // Ensure the timestamp and bookings count are included
+      Map<String, dynamic> userData = {
+        'id': user.id,
+        'email': user.email,
+        'name': user.name,
+        'photoUrl': user.photoUrl,
+        'createdAt':
+            user.createdAt ?? DateTime.now(), // Ensure createdAt is set
+        'bookingsCount': user.bookingsCount ?? 0, // Initialize bookings count
+      };
+
+      await userCollection.doc(user.id).set(userData);
     } catch (e) {
-      log(e.toString());
-      rethrow;
+      throw FirebaseException(
+        plugin: 'firebase_firestore',
+        message: e.toString(),
+      );
     }
   }
 
@@ -127,5 +140,30 @@ class FirebaseUserRepository extends UserRepository {
       log(e.toString());
       rethrow;
     }
+  }
+}
+
+// Add this to an admin controller or utility class
+Future<void> updateExistingUsersWithTimestamp() async {
+  try {
+    final usersSnapshot =
+        await FirebaseFirestore.instance.collection('users').get();
+
+    for (var doc in usersSnapshot.docs) {
+      if (doc.data()['createdAt'] == null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(doc.id)
+            .update({
+          'createdAt': DateTime.now(), // Current time as fallback
+          'bookingsCount': 0, // Initialize booking count
+        });
+        print('Updated user ${doc.id} with timestamp and booking count');
+      }
+    }
+
+    print('Completed updating users');
+  } catch (e) {
+    print('Error updating users: $e');
   }
 }

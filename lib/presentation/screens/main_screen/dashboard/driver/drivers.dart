@@ -1,4 +1,6 @@
+import 'package:car_ticket/controller/dashboard/car_controller.dart';
 import 'package:car_ticket/controller/dashboard/driver_controller.dart';
+import 'package:car_ticket/domain/models/car/car.dart';
 import 'package:car_ticket/domain/models/driver/driver.dart';
 import 'package:car_ticket/presentation/screens/main_screen/dashboard/driver/add_driver.dart';
 import 'package:car_ticket/presentation/screens/main_screen/dashboard/driver/edit_driver.dart';
@@ -213,30 +215,30 @@ class _DriversScreenState extends State<DriversScreen> {
                   iconColor: Theme.of(context).primaryColor,
                   backgroundColor: Colors.blue.withOpacity(0.1),
                 ),
-                const SizedBox(width: 12),
-                _buildStatCard(
-                  context,
-                  title: 'Available',
-                  value: controller.drivers
-                      .where((d) => !d.isAssigned)
-                      .length
-                      .toString(),
-                  icon: Icons.person_pin_circle,
-                  iconColor: Colors.green,
-                  backgroundColor: Colors.green.withOpacity(0.1),
-                ),
-                const SizedBox(width: 12),
-                _buildStatCard(
-                  context,
-                  title: 'Assigned',
-                  value: controller.drivers
-                      .where((d) => d.isAssigned)
-                      .length
-                      .toString(),
-                  icon: Icons.local_taxi,
-                  iconColor: Colors.orange,
-                  backgroundColor: Colors.orange.withOpacity(0.1),
-                ),
+                // const SizedBox(width: 12),
+                // _buildStatCard(
+                //   context,
+                //   title: 'Available',
+                //   value: controller.drivers
+                //       .where((d) => !d.isAssigned)
+                //       .length
+                //       .toString(),
+                //   icon: Icons.person_pin_circle,
+                //   iconColor: Colors.green,
+                //   backgroundColor: Colors.green.withOpacity(0.1),
+                // ),
+                // const SizedBox(width: 12),
+                // _buildStatCard(
+                //   context,
+                //   title: 'Assigned',
+                //   value: controller.drivers
+                //       .where((d) => d.isAssigned)
+                //       .length
+                //       .toString(),
+                //   icon: Icons.local_taxi,
+                //   iconColor: Colors.orange,
+                //   backgroundColor: Colors.orange.withOpacity(0.1),
+                // ),
               ],
             ),
           );
@@ -514,6 +516,71 @@ class _DriversScreenState extends State<DriversScreen> {
       ),
     );
   }
+
+  // In your DriversScreen, add a method to show car assignment info
+  Widget _buildDriverAssignmentInfo(CarDriver driver) {
+    return GetBuilder<CarController>(builder: (carController) {
+      // Find if this driver is assigned to any car
+      final assignedCar = carController.cars
+          .firstWhereOrNull((car) => car.driverId == driver.id);
+
+      if (assignedCar != null) {
+        return Container(
+          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+          decoration: BoxDecoration(
+            color: Colors.blue.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(4.r),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.directions_car,
+                size: 12.sp,
+                color: Colors.blue[700],
+              ),
+              SizedBox(width: 4.w),
+              Text(
+                'Assigned to ${assignedCar.name}',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: Colors.blue[700],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      return Container(
+        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+        decoration: BoxDecoration(
+          color: Colors.green.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(4.r),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.check_circle,
+              size: 12.sp,
+              color: Colors.green,
+            ),
+            SizedBox(width: 4.w),
+            Text(
+              'Available',
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: Colors.green,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
 }
 
 class EnhancedDriverCard extends StatelessWidget {
@@ -544,7 +611,7 @@ class EnhancedDriverCard extends StatelessWidget {
     final Color avatarColor =
         avatarColors[nameHash.abs() % avatarColors.length];
 
-    // Use isAssigned as an active status indicator
+    // This is the critical change - use the actual driver.isAssigned property
     final bool isActive = !driver.isAssigned;
 
     return Card(
@@ -638,19 +705,23 @@ class EnhancedDriverCard extends StatelessWidget {
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // This is where you need to update the status display
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: isActive
                           ? Colors.green.withOpacity(0.1)
-                          : Colors.grey.withOpacity(0.1),
+                          : Colors.orange
+                              .withOpacity(0.1), // Changed from grey to orange
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       isActive ? 'Available' : 'Assigned',
                       style: TextStyle(
-                        color: isActive ? Colors.green : Colors.grey,
+                        color: isActive
+                            ? Colors.green
+                            : Colors.orange, // Changed from grey to orange
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -684,6 +755,7 @@ class DriverDetailsView extends StatelessWidget {
 
     return Column(
       children: [
+        // Drag handle
         Container(
           width: 50,
           height: 5,
@@ -693,196 +765,229 @@ class DriverDetailsView extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+
+        // Make the content scrollable to avoid overflow
+        Expanded(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: Theme.of(context).primaryColor,
-                    child: Text(
-                      fullName.isNotEmpty
-                          ? fullName.substring(0, 1).toUpperCase()
-                          : 'D',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          fullName,
+                  // Driver header with avatar and basic info
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Theme.of(context).primaryColor,
+                        child: Text(
+                          fullName.isNotEmpty
+                              ? fullName.substring(0, 1).toUpperCase()
+                              : 'D',
                           style: const TextStyle(
+                            fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            fontSize: 22,
+                            color: Colors.white,
                           ),
                         ),
-                        const SizedBox(height: 5),
-                        Row(
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: isActive
-                                    ? Colors.green.withOpacity(0.1)
-                                    : Colors.grey.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(20),
+                            Text(
+                              fullName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 22,
                               ),
-                              child: Text(
-                                isActive ? 'Available' : 'Assigned',
-                                style: TextStyle(
-                                  color: isActive ? Colors.green : Colors.grey,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
+                            ),
+                            const SizedBox(height: 5),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: isActive
+                                        ? Colors.green.withOpacity(0.1)
+                                        : Colors.grey.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    isActive ? 'Available' : 'Assigned',
+                                    style: TextStyle(
+                                      color:
+                                          isActive ? Colors.green : Colors.grey,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+
+                  // Assignment status section
+                  const SizedBox(height: 30),
+                  const Text(
+                    'Assignment Status',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 30),
-              const Text(
-                'Driver Information',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildInfoItem(Icons.phone_android, 'Phone Number', driver.phone),
-              _buildInfoItem(Icons.email, 'Email Address', driver.email),
-              _buildInfoItem(Icons.badge, 'License Category',
-                  driver.driverLicenseCategory),
-              _buildInfoItem(Icons.person, 'Gender', driver.sexStatus),
-              _buildInfoItem(Icons.location_on, 'Address',
-                  "${driver.address}, ${driver.city}"),
-              const SizedBox(height: 30),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        // Show delete confirmation dialog
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              title: Row(
-                                children: [
-                                  Icon(
-                                    Icons.warning_rounded,
-                                    color: Colors.red[700],
-                                    size: 28,
+                  const SizedBox(height: 16),
+                  _buildAssignmentStatus(),
+
+                  // Driver information section
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Driver Information',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildInfoItem(
+                      Icons.phone_android, 'Phone Number', driver.phone),
+                  _buildInfoItem(Icons.email, 'Email Address', driver.email),
+                  _buildInfoItem(Icons.badge, 'License Category',
+                      driver.driverLicenseCategory),
+                  _buildInfoItem(Icons.person, 'Gender', driver.sexStatus),
+                  _buildInfoItem(Icons.location_on, 'Address',
+                      "${driver.address}, ${driver.city}"),
+
+                  // Action buttons
+                  const SizedBox(height: 30),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            // Show delete confirmation dialog
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
-                                  const SizedBox(width: 8),
-                                  const Text('Delete Driver'),
-                                ],
-                              ),
-                              content: Text(
-                                'Are you sure you want to delete ${driver.firstName} ${driver.lastName}? This action cannot be undone.',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text('Cancel'),
-                                ),
-                                ElevatedButton.icon(
-                                  onPressed: () {
-                                    // Get driver controller
-                                    final controller =
-                                        Get.find<DriverController>();
-                                    // Delete driver
-                                    controller.deleteDriver(driver);
-                                    // Close both the dialog and the details bottom sheet
-                                    Navigator.pop(context);
-                                    Navigator.pop(context);
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 16),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
+                                  title: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.warning_rounded,
+                                        color: Colors.red[700],
+                                        size: 28,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Text('Delete Driver'),
+                                    ],
+                                  ),
+                                  content: Text(
+                                    'Are you sure you want to delete ${driver.firstName} ${driver.lastName}? This action cannot be undone.',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text('Cancel'),
                                     ),
-                                  ),
-                                  icon: const Icon(Icons.delete_forever,
-                                      color: Colors.white, size: 20),
-                                  label: const Text('Delete'),
-                                ),
-                              ],
+                                    ElevatedButton.icon(
+                                      onPressed: () {
+                                        // Get driver controller
+                                        final controller =
+                                            Get.find<DriverController>();
+                                        // Delete driver
+                                        controller.deleteDriver(driver);
+                                        // Close both the dialog and the details bottom sheet
+                                        Navigator.pop(context);
+                                        Navigator.pop(context);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 16),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                      icon: const Icon(Icons.delete_forever,
+                                          color: Colors.white, size: 20),
+                                      label: const Text('Delete'),
+                                    ),
+                                  ],
+                                );
+                              },
                             );
                           },
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      icon:
-                          const Icon(Icons.delete_forever, color: Colors.white),
-                      label: const Text('Delete Driver'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (context) => DraggableScrollableSheet(
-                            initialChildSize: 0.95, // Almost full screen
-                            minChildSize: 0.5, // Minimum half screen
-                            maxChildSize: 0.95, // Maximum almost full screen
-                            builder: (context, scrollController) => Padding(
-                              padding: EdgeInsets.only(
-                                bottom:
-                                    MediaQuery.of(context).viewInsets.bottom,
-                              ),
-                              child: EditDriverScreen(driver: driver),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                        );
-                      },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Theme.of(context).primaryColor,
-                        side: BorderSide(color: Theme.of(context).primaryColor),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          icon: const Icon(Icons.delete_forever,
+                              color: Colors.white),
+                          label: const Text('Delete Driver'),
                         ),
                       ),
-                      icon: const Icon(Icons.edit),
-                      label: const Text('Edit Details'),
-                    ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (context) => DraggableScrollableSheet(
+                                initialChildSize: 0.95, // Almost full screen
+                                minChildSize: 0.5, // Minimum half screen
+                                maxChildSize:
+                                    0.95, // Maximum almost full screen
+                                builder: (context, scrollController) => Padding(
+                                  padding: EdgeInsets.only(
+                                    bottom: MediaQuery.of(context)
+                                        .viewInsets
+                                        .bottom,
+                                  ),
+                                  child: EditDriverScreen(driver: driver),
+                                ),
+                              ),
+                            );
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Theme.of(context).primaryColor,
+                            side: BorderSide(
+                                color: Theme.of(context).primaryColor),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          icon: const Icon(Icons.edit),
+                          label: const Text('Edit Details'),
+                        ),
+                      ),
+                    ],
                   ),
+
+                  // Add some bottom padding to ensure nothing is hidden
+                  const SizedBox(height: 20),
                 ],
               ),
-            ],
+            ),
           ),
         ),
       ],
@@ -922,6 +1027,184 @@ class DriverDetailsView extends StatelessWidget {
                   style: const TextStyle(
                     fontWeight: FontWeight.w500,
                     fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Add this to show assignment status with car details
+  Widget _buildAssignmentStatus() {
+    // Check if CarController is already registered
+    final bool hasCarController = Get.isRegistered<CarController>();
+
+    // If driver is not assigned, we don't need the car controller
+    if (!driver.isAssigned) {
+      return _buildAvailableDriverStatus();
+    }
+
+    // For assigned drivers where we need car info
+    if (!hasCarController) {
+      // Fallback when controller is not available
+      return _buildAssignedDriverStatusWithoutCar();
+    }
+
+    // Normal case when controller is available
+    return GetBuilder<CarController>(
+      builder: (carController) {
+        // Try-catch to handle potential errors when finding assigned car
+        ExcelCar? assignedCar;
+        try {
+          assignedCar = carController.cars.firstWhere(
+            (car) => car.driverId == driver.id,
+            orElse: () => ExcelCar.empty,
+          );
+        } catch (e) {
+          print('Error finding assigned car: $e');
+        }
+
+        final bool carFound = assignedCar != null &&
+            assignedCar.id.isNotEmpty &&
+            assignedCar != ExcelCar.empty;
+
+        return _buildAssignedDriverStatusWithCar(
+          carFound ? assignedCar.name : null,
+          carFound ? assignedCar.plateNumber : null,
+        );
+      },
+    );
+  }
+
+  // Helper methods to build specific status widgets
+  Widget _buildAvailableDriverStatus() {
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.h),
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: Colors.green.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: Colors.green.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.check_circle,
+            color: Colors.green,
+            size: 24.sp,
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Available',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                    fontSize: 16.sp,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  'This driver is not assigned to any vehicle',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssignedDriverStatusWithoutCar() {
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.h),
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: Colors.orange.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.directions_car,
+            color: Colors.orange,
+            size: 24.sp,
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Currently Assigned',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange,
+                    fontSize: 16.sp,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  'Assigned to a vehicle',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssignedDriverStatusWithCar(
+      String? carName, String? plateNumber) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.h),
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: Colors.orange.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.directions_car,
+            color: Colors.orange,
+            size: 24.sp,
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Currently Assigned',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange,
+                    fontSize: 16.sp,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  carName != null && plateNumber != null
+                      ? 'Assigned to $carName ($plateNumber)'
+                      : 'Assigned to a vehicle',
+                  style: TextStyle(
+                    fontSize: 14.sp,
                   ),
                 ),
               ],

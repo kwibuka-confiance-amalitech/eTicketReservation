@@ -20,16 +20,27 @@ class SignUpController extends GetxController {
     try {
       isSigningIn = true;
       update();
+
+      // Add timestamp and initial booking count to user object
+      myUser = myUser.copyWith(
+        createdAt: DateTime.now(),
+        bookingsCount: 0, // Start with zero bookings
+      );
+
       await _firebaseUserRepository.signUpWithEmailAndPassword(
           myUser, password);
 
       final response = await _firebaseUserRepository.signInWithEmailAndPassword(
           myUser.email, password);
 
+      // Create complete user object with all required fields
       MyUser user = MyUser(
         id: response.user!.uid,
         email: response.user!.email!,
-        name: response.user!.displayName ?? '',
+        name: response.user!.displayName ??
+            myUser.name, // Use provided name if displayName is null
+        createdAt: DateTime.now(), // Set creation timestamp
+        bookingsCount: 0, // Initialize booking count
       );
 
       await _ticketAppSharedPreferenceRepository.setUser(user);

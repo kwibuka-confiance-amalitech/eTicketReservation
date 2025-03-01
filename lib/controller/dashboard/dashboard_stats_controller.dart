@@ -1,77 +1,78 @@
+import 'package:car_ticket/controller/dashboard/car_controller.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
 class DashboardStatsController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  bool isLoading = true;
   int ticketCount = 0;
-  int availableCars = 0;
   int userCount = 0;
+  int availableCars = 0;
+  int totalCars = 0;
+  bool isLoading = true;
 
   @override
   void onInit() {
     super.onInit();
-    fetchDashboardStats();
+    fetchStats();
   }
 
-  Future<void> fetchDashboardStats() async {
+  Future<void> fetchStats() async {
     isLoading = true;
     update();
 
     try {
-      await Future.wait([
-        fetchTicketCount(),
-        fetchAvailableCars(),
-        fetchUserCount(),
-      ]);
+      // Get ticket count
+      final ticketSnapshot = await _firestore.collection('tickets').get();
+      ticketCount = ticketSnapshot.docs.length;
+
+      // Get user count
+      final userSnapshot = await _firestore.collection('users').get();
+      userCount = userSnapshot.docs.length;
+
+      // Get cars statistics
+      await _fetchCarStats();
+
+      isLoading = false;
+      update();
     } catch (e) {
       print('Error fetching dashboard stats: $e');
-    } finally {
       isLoading = false;
       update();
     }
   }
 
-  Future<void> fetchTicketCount() async {
+  Future<void> _fetchCarStats() async {
+    // Try to use the car controller if it exists
+    if (Get.isRegistered<CarController>()) {
+      final carController = Get.find<CarController>();
+      if (carController.cars.isNotEmpty) {
+        // Cars are already loaded in the controller
+        totalCars = carController.cars.length;
+        availableCars =
+            carController.cars.where((car) => !car.isAssigned).length;
+        return;
+      }
+    }
+
+    // Fallback: Fetch cars directly from Firestore
     try {
-      // Get count of all payments related to tickets
-      final paymentSnapshot = await _firestore.collection('payments').get();
-      ticketCount = paymentSnapshot.docs.length;
+      final carSnapshot = await _firestore.collection('cars').get();
+      totalCars = carSnapshot.docs.length;
+      availableCars = carSnapshot.docs
+          .where((doc) =>
+              doc.data().containsKey('isAssigned') &&
+              doc.data()['isAssigned'] == false)
+          .length;
     } catch (e) {
-      print('Error fetching ticket count: $e');
+      print('Error fetching car stats: $e');
+      totalCars = 0;
+      availableCars = 0;
     }
   }
 
-  Future<void> fetchAvailableCars() async {
-    try {
-      // Get count of cars not assigned to routes
-      final carSnapshot = await _firestore
-          .collection('cars')
-          .where('isAssigned', isEqualTo: false)
-          .get();
-
-      availableCars = carSnapshot.docs.length;
-    } catch (e) {
-      print('Error fetching available cars: $e');
-    }
-  }
-
-  Future<void> fetchUserCount() async {
-    try {
-      // Get count of active users
-      final userSnapshot = await _firestore
-          .collection('users')
-          .where('isActive', isEqualTo: true)
-          .get();
-
-      userCount = userSnapshot.docs.length;
-    } catch (e) {
-      print('Error fetching user count: $e');
-    }
-  }
-
-  Future<void> refreshStats() async {
-    await fetchDashboardStats();
+  // Method to manually refresh stats (can be called from UI)
+  void refreshStats() {
+    fetchStats();
   }
 }

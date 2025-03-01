@@ -1,3 +1,4 @@
+import 'package:car_ticket/controller/dashboard/car_controller.dart';
 import 'package:car_ticket/domain/repositories/user/firebase_user_repository.dart';
 import 'package:car_ticket/domain/repositories/user/user_repository.dart';
 import 'package:car_ticket/presentation/screens/auth/auth_screen.dart';
@@ -21,7 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
-import 'package:get/route_manager.dart';
+import 'package:get/get.dart';
 
 import 'firebase_options.dart';
 
@@ -36,6 +37,10 @@ void main() async {
 
   print('Setting up Stripe...');
   Stripe.publishableKey = dotenv.env['STRIPE_TEST_PUBLISHABLE_KEY']!;
+
+  // Initialize controllers
+  Get.put(CarController(), permanent: true);
+  // ... other controllers initialization
 
   print('Starting app...');
   runApp(MyApp(

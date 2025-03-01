@@ -72,11 +72,11 @@ class CarRepositoryImp implements CarRepository {
   }
 
   @override
-  Future<void> assignDriverToCar(String driverId, String carId) async {
+  Future<void> assignDriverToCar(String driverId, String carId,
+      {required String driverName}) async {
     try {
-      await _carsCollection
-          .doc(carId)
-          .update({'driverId': driverId, 'isAssigned': true});
+      await _carsCollection.doc(carId).update(
+          {'driverId': driverId, 'isAssigned': true, 'driverName': driverName});
     } catch (e) {
       rethrow;
     }
@@ -114,6 +114,7 @@ class CarRepositoryImp implements CarRepository {
   Future<CarSeats> getCarSeats(String id) async {
     try {
       final response = await _carSeatsCollection.doc(id).get();
+      print(response.data());
       return CarSeats.fromDocument(response.data()!);
     } catch (e) {
       rethrow;

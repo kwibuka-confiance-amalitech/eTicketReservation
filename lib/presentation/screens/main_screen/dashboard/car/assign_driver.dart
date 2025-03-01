@@ -149,7 +149,7 @@ class _AssignDriverSheetState extends State<AssignDriverSheet> {
             ),
           ),
 
-          // Available drivers list
+          // Available and assigned drivers list with sections
           Expanded(
             child: GetBuilder<DriverController>(
               init: DriverController(),
@@ -158,12 +158,16 @@ class _AssignDriverSheetState extends State<AssignDriverSheet> {
                   return _buildLoadingShimmer();
                 }
 
-                // Get unassigned drivers
-                var availableDrivers = controller.drivers
-                    .where((driver) => !driver.isAssigned)
-                    .toList();
+                // Get all drivers
+                var allDrivers = controller.drivers;
 
-                // Apply search filter
+                // Separate available and assigned drivers
+                var availableDrivers =
+                    allDrivers.where((driver) => !driver.isAssigned).toList();
+                var assignedDrivers =
+                    allDrivers.where((driver) => driver.isAssigned).toList();
+
+                // Apply search filter to both lists
                 if (_searchQuery.isNotEmpty) {
                   availableDrivers = availableDrivers
                       .where((driver) =>
@@ -172,21 +176,57 @@ class _AssignDriverSheetState extends State<AssignDriverSheet> {
                               .contains(_searchQuery) ||
                           driver.phone.toLowerCase().contains(_searchQuery))
                       .toList();
+
+                  assignedDrivers = assignedDrivers
+                      .where((driver) =>
+                          '${driver.firstName} ${driver.lastName}'
+                              .toLowerCase()
+                              .contains(_searchQuery) ||
+                          driver.phone.toLowerCase().contains(_searchQuery))
+                      .toList();
                 }
 
-                if (availableDrivers.isEmpty) {
+                if (availableDrivers.isEmpty && assignedDrivers.isEmpty) {
                   return _buildEmptyState();
                 }
 
-                return ListView.builder(
+                return ListView(
                   padding: EdgeInsets.all(16.w),
-                  itemCount: availableDrivers.length,
-                  itemBuilder: (context, index) {
-                    final driver = availableDrivers[index];
-                    final isSelected = selectedDriverId == driver.id;
+                  children: [
+                    // Available drivers section
+                    if (availableDrivers.isNotEmpty) ...[
+                      Text(
+                        'Available Drivers',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      Gap(12.h),
+                      ...availableDrivers.map((driver) {
+                        final isSelected = selectedDriverId == driver.id;
+                        return _buildDriverCard(driver, isSelected, false);
+                      }),
+                      Gap(24.h),
+                    ],
 
-                    return _buildDriverCard(driver, isSelected);
-                  },
+                    // Assigned drivers section
+                    if (assignedDrivers.isNotEmpty) ...[
+                      Text(
+                        'Already Assigned Drivers',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      Gap(12.h),
+                      ...assignedDrivers.map((driver) {
+                        return _buildDriverCard(driver, false, true);
+                      }),
+                    ],
+                  ],
                 );
               },
             ),
@@ -250,78 +290,189 @@ class _AssignDriverSheetState extends State<AssignDriverSheet> {
     );
   }
 
-  Widget _buildDriverCard(CarDriver driver, bool isSelected) {
-    return Card(
-      margin: EdgeInsets.only(bottom: 12.h),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color:
-              isSelected ? Theme.of(context).primaryColor : Colors.transparent,
-          width: 2,
-        ),
-      ),
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            selectedDriverId = isSelected ? null : driver.id;
-          });
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: EdgeInsets.all(12.w),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 24.r,
-                backgroundColor: isSelected
-                    ? Theme.of(context).primaryColor
-                    : Colors.grey.shade200,
-                child: Text(
-                  "${driver.firstName[0]}${driver.lastName[0]}",
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : Colors.black87,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              Gap(16.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "${driver.firstName} ${driver.lastName}",
+  Widget _buildDriverCard(
+      CarDriver driver, bool isSelected, bool isAlreadyAssigned) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Card(
+          margin: EdgeInsets.only(bottom: 12.h),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: isSelected
+                  ? Theme.of(context).primaryColor
+                  : isAlreadyAssigned
+                      ? Colors.grey[300]!
+                      : Colors.transparent,
+              width: isSelected ? 2 : 1,
+            ),
+          ),
+          color: isAlreadyAssigned ? Colors.grey[50] : Colors.white,
+          child: InkWell(
+            onTap: isAlreadyAssigned
+                ? () {
+                    // Show an informative message when tapping on an assigned driver
+                    Get.snackbar(
+                      "Driver Already Assigned",
+                      "This driver is already assigned to another vehicle. Please unassign them first.",
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: Colors.orange.withOpacity(0.8),
+                      colorText: Colors.white,
+                    );
+                  }
+                : () {
+                    setState(() {
+                      selectedDriverId = isSelected ? null : driver.id;
+                    });
+                  },
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: EdgeInsets.all(12.w),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 24.r,
+                    backgroundColor: isSelected
+                        ? Theme.of(context).primaryColor
+                        : isAlreadyAssigned
+                            ? Colors.grey.shade300
+                            : Colors.grey.shade200,
+                    child: Text(
+                      "${driver.firstName[0]}${driver.lastName[0]}",
                       style: TextStyle(
+                        color: isSelected
+                            ? Colors.white
+                            : isAlreadyAssigned
+                                ? Colors.grey[600]
+                                : Colors.black87,
                         fontWeight: FontWeight.bold,
-                        fontSize: 16.sp,
                       ),
                     ),
-                    Gap(4.h),
-                    Text(
-                      driver.phone,
-                      style: TextStyle(
+                  ),
+                  Gap(16.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "${driver.firstName} ${driver.lastName}",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16.sp,
+                            color: isAlreadyAssigned
+                                ? Colors.grey[700]
+                                : Colors.black,
+                          ),
+                        ),
+                        Gap(4.h),
+                        Text(
+                          driver.phone,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14.sp,
+                          ),
+                        ),
+                        if (isAlreadyAssigned) ...[
+                          Gap(4.h),
+                          GetBuilder<CarController>(
+                            builder: (carController) {
+                              // Find which car this driver is assigned to
+                              final assignedCar = carController.cars
+                                  .firstWhereOrNull(
+                                      (car) => car.driverId == driver.id);
+
+                              return Row(
+                                children: [
+                                  Icon(
+                                    Icons.warning_amber_rounded,
+                                    size: 14.sp,
+                                    color: Colors.orange[700],
+                                  ),
+                                  Gap(4.w),
+                                  Expanded(
+                                    child: Text(
+                                      assignedCar != null
+                                          ? 'Already assigned to ${assignedCar.name}'
+                                          : 'Already assigned to another vehicle',
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        color: Colors.orange[700],
+                                        fontStyle: FontStyle.italic,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (!isAlreadyAssigned)
+                    Radio<String>(
+                      value: driver.id,
+                      groupValue: selectedDriverId,
+                      onChanged: (value) {
+                        setState(() {
+                          selectedDriverId = value;
+                        });
+                      },
+                      activeColor: Theme.of(context).primaryColor,
+                    ),
+                  if (isAlreadyAssigned)
+                    IconButton(
+                      icon: Icon(
+                        Icons.info_outline,
                         color: Colors.grey[600],
-                        fontSize: 14.sp,
+                        size: 20.sp,
                       ),
+                      onPressed: () {
+                        // Show info about car assignment
+                        Get.snackbar(
+                          "Driver Unavailable",
+                          "This driver is already assigned to another vehicle and can't be reassigned until unassigned.",
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: Colors.blueGrey.withOpacity(0.8),
+                          colorText: Colors.white,
+                          duration: const Duration(seconds: 3),
+                        );
+                      },
                     ),
-                  ],
-                ),
+                ],
               ),
-              Radio<String>(
-                value: driver.id,
-                groupValue: selectedDriverId,
-                onChanged: (value) {
-                  setState(() {
-                    selectedDriverId = value;
-                  });
-                },
-                activeColor: Theme.of(context).primaryColor,
-              ),
-            ],
+            ),
           ),
         ),
-      ),
+
+        // "Assigned" banner for already assigned drivers
+        if (isAlreadyAssigned)
+          Positioned(
+            top: -8,
+            right: 0,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: Colors.orange[700],
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(8.r),
+                  bottomLeft: Radius.circular(8.r),
+                ),
+              ),
+              child: Text(
+                'Assigned',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 10.sp,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -358,7 +509,7 @@ class _AssignDriverSheetState extends State<AssignDriverSheet> {
           ),
           Gap(16.h),
           Text(
-            'No Available Drivers',
+            'No Drivers Found',
             style: TextStyle(
               fontSize: 18.sp,
               fontWeight: FontWeight.bold,
@@ -367,7 +518,9 @@ class _AssignDriverSheetState extends State<AssignDriverSheet> {
           ),
           Gap(8.h),
           Text(
-            'All drivers are currently assigned\nor no drivers match your search',
+            _searchQuery.isNotEmpty
+                ? 'No drivers match your search criteria'
+                : 'No drivers available in the system',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14.sp,
@@ -376,6 +529,25 @@ class _AssignDriverSheetState extends State<AssignDriverSheet> {
           ),
         ],
       ),
+    );
+  }
+
+  void _assignDriver() {
+    if (selectedDriverId == null) {
+      Get.snackbar(
+        "No Selection",
+        "Please select a driver to assign",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    final controller = Get.find<CarController>();
+    controller.assignDriverToCar(
+      carId: widget.car.id,
+      driverId: selectedDriverId!,
     );
   }
 }
