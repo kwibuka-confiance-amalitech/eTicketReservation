@@ -3,6 +3,7 @@ import 'package:car_ticket/domain/models/car/car.dart';
 import 'package:car_ticket/presentation/screens/main_screen/dashboard/car/add_car.dart';
 import 'package:car_ticket/presentation/screens/main_screen/dashboard/car/assign_driver.dart';
 import 'package:car_ticket/presentation/screens/main_screen/dashboard/car/edit_car.dart';
+import 'package:car_ticket/presentation/screens/main_screen/dashboard/car/vehicle_QRcode_screen.dart';
 import 'package:car_ticket/presentation/widgets/dashboard/car_seat_status.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -927,6 +928,69 @@ class CarDetailsView extends StatelessWidget {
                     child: Padding(
                       padding: EdgeInsets.all(16.w),
                       child: CarSeatStatusWidget(car: car),
+                    ),
+                  ),
+                ),
+
+                // QR Code Generate Button (Add this before the Extra space at bottom section)
+                SizedBox(height: 24.h),
+                Card(
+                  elevation: 0,
+                  color: Colors.blue.withOpacity(0.05),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    side: BorderSide(color: Colors.blue.withOpacity(0.3)),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(16.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.qr_code_rounded,
+                              color: Colors.blue,
+                              size: 24.sp,
+                            ),
+                            SizedBox(width: 12.w),
+                            Text(
+                              'Vehicle QR Code',
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 8.h),
+                        Text(
+                          'Generate a unique QR code for this vehicle that customers can scan when boarding',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Get.to(() => VehicleQRCodeScreen(car: car));
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                            minimumSize: Size(double.infinity, 48.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                          ),
+                          icon: Icon(Icons.qr_code),
+                          label: Text('Generate Vehicle QR Code'),
+                        ),
+                      ],
                     ),
                   ),
                 ),

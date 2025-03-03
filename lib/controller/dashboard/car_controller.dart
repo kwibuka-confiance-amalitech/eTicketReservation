@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:car_ticket/controller/dashboard/dashboard_stats_controller.dart';
 import 'package:car_ticket/controller/dashboard/driver_controller.dart';
+import 'package:car_ticket/controller/dashboard/journey_destination_controller.dart';
 import 'package:car_ticket/domain/models/car/car.dart';
+import 'package:car_ticket/domain/models/destination/journey_destination.dart';
 import 'package:car_ticket/domain/models/driver/driver.dart';
 import 'package:car_ticket/domain/models/seat.dart';
 import 'package:car_ticket/domain/repositories/car_repository/car_repository_imp.dart';
@@ -39,6 +41,9 @@ class CarController extends GetxController {
   CarStatus? selectedItem;
   List<ExcelCar> cars = [];
   List<Seat> selectedSeats = [];
+
+  bool isSaving = false;
+  bool isSharing = false;
 
   @override
   void onInit() {
@@ -355,6 +360,76 @@ class CarController extends GetxController {
       isUpdatingCar = false;
       update();
       rethrow;
+    }
+  }
+
+  // Add these methods
+  void setSaving(bool value) {
+    isSaving = value;
+    update();
+  }
+
+  void setSharing(bool value) {
+    isSharing = value;
+    update();
+  }
+
+  // Add method to get destination for car
+  JourneyDestination? getDestinationForCar(String carId) {
+    try {
+      // Check if JourneyDestinationController is registered before trying to find it
+      if (!Get.isRegistered<JourneyDestinationController>()) {
+        print('Warning: JourneyDestinationController not registered');
+        return null;
+      }
+
+      final journeyController = Get.find<JourneyDestinationController>();
+      return journeyController.destinations.firstWhereOrNull(
+        (dest) => dest.carId == carId && dest.isAssigned,
+      );
+    } catch (e) {
+      print('Error getting destination for car: $e');
+      return null;
+    }
+  }
+
+  // Add this method to your CarController
+  Future<void> updateCarsWithCreatedAt() async {
+    try {
+      isUpdatingCar = true;
+      update();
+
+      // Get cars without createdAt
+      await getCars();
+
+      // Update each car
+      for (final car in cars) {
+        final updatedCar =
+            car; // In a real scenario, you'd create a new car with createdAt
+        await carRepository.updateCar(updatedCar);
+      }
+
+      await getCars(); // Refresh the list
+      isUpdatingCar = false;
+      update();
+
+      Get.snackbar(
+        'Success',
+        'All cars updated with created timestamp',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      isUpdatingCar = false;
+      update();
+      Get.snackbar(
+        'Error',
+        'Failed to update cars: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 }

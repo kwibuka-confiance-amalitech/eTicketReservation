@@ -93,12 +93,70 @@ class AddCarToDestination extends StatelessWidget {
                                                     destinationId:
                                                         destination.id)
                                             : () {
+                                                // Check if this car is already assigned to another destination
+                                                final isAssignedElsewhere =
+                                                    destinationController
+                                                        .destinations
+                                                        .any(
+                                                  (dest) =>
+                                                      dest.carId ==
+                                                          carController
+                                                              .cars[item].id &&
+                                                      dest.id !=
+                                                          destination.id &&
+                                                      dest.isAssigned,
+                                                );
+
+                                                if (isAssignedElsewhere) {
+                                                  final assignedTo =
+                                                      destinationController
+                                                          .destinations
+                                                          .firstWhere(
+                                                    (dest) =>
+                                                        dest.carId ==
+                                                        carController
+                                                            .cars[item].id,
+                                                  );
+
+                                                  Get.snackbar(
+                                                    "Vehicle Not Available",
+                                                    "This vehicle is currently assigned to route: ${assignedTo.description}",
+                                                    snackPosition:
+                                                        SnackPosition.BOTTOM,
+                                                    backgroundColor: Colors
+                                                        .orange
+                                                        .withOpacity(0.8),
+                                                    colorText: Colors.white,
+                                                  );
+                                                  return;
+                                                }
+
+                                                // Check if this destination already has a different car
+                                                if (destination.isAssigned &&
+                                                    destination
+                                                        .carId.isNotEmpty &&
+                                                    destination.carId !=
+                                                        carController
+                                                            .cars[item].id) {
+                                                  Get.snackbar(
+                                                    "Route Already Has Vehicle",
+                                                    "This route already has a vehicle assigned. Please unassign it first.",
+                                                    snackPosition:
+                                                        SnackPosition.BOTTOM,
+                                                    backgroundColor: Colors
+                                                        .orange
+                                                        .withOpacity(0.8),
+                                                    colorText: Colors.white,
+                                                  );
+                                                  return;
+                                                }
+
                                                 destinationController
                                                     .assignCarToDestination(
-                                                        destinationId:
-                                                            destination.id,
-                                                        carId: carController
-                                                            .cars[item].id);
+                                                  destinationId: destination.id,
+                                                  carId: carController
+                                                      .cars[item].id,
+                                                );
                                               },
                                         child: destination.carId ==
                                                 carController.cars[item].id
@@ -297,6 +355,34 @@ class _AssignCarSheetState extends State<AssignCarSheet> {
                       ),
                       child: InkWell(
                         onTap: () {
+                          // Get destinations from controller
+                          final destinationController =
+                              Get.find<JourneyDestinationController>();
+
+                          // Check if car is already assigned to another destination
+                          final isAssignedElsewhere =
+                              destinationController.destinations.any(
+                            (dest) =>
+                                dest.carId == car.id &&
+                                dest.id != widget.destination.id,
+                          );
+
+                          if (isAssignedElsewhere) {
+                            final assignedTo =
+                                destinationController.destinations.firstWhere(
+                              (dest) => dest.carId == car.id,
+                            );
+
+                            Get.snackbar(
+                              "Car Not Available",
+                              "This car is currently assigned to route: ${assignedTo.description}",
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.orange.withOpacity(0.8),
+                              colorText: Colors.white,
+                            );
+                            return;
+                          }
+
                           setState(() {
                             selectedCarId = isSelected ? null : car.id;
                           });
@@ -305,46 +391,149 @@ class _AssignCarSheetState extends State<AssignCarSheet> {
                           padding: EdgeInsets.all(12.w),
                           child: Row(
                             children: [
-                              CircleAvatar(
-                                radius: 24.r,
-                                backgroundColor:
-                                    isSelected || isCurrentlyAssigned
-                                        ? Theme.of(context).primaryColor
-                                        : Colors.grey.shade200,
-                                child: Icon(
-                                  Icons.directions_bus,
-                                  color: isSelected || isCurrentlyAssigned
-                                      ? Colors.white
-                                      : Colors.grey.shade700,
-                                ),
-                              ),
-                              Gap(16.w),
+                              // Car info
                               Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                child: Row(
                                   children: [
-                                    Text(
-                                      car.name,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16.sp,
+                                    // Car icon
+                                    CircleAvatar(
+                                      radius: 24.r,
+                                      backgroundColor:
+                                          isSelected || isCurrentlyAssigned
+                                              ? Theme.of(context).primaryColor
+                                              : Colors.grey.shade200,
+                                      child: Icon(
+                                        Icons.directions_bus,
+                                        color: isSelected || isCurrentlyAssigned
+                                            ? Colors.white
+                                            : Colors.grey.shade700,
                                       ),
                                     ),
-                                    Gap(4.h),
-                                    Text(
-                                      car.plateNumber,
-                                      style: TextStyle(
-                                        color: Colors.grey[600],
-                                        fontSize: 14.sp,
+                                    SizedBox(width: 12.w),
+
+                                    // Car details
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            car.name,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16.sp,
+                                            ),
+                                          ),
+                                          SizedBox(height: 4.h),
+                                          Text(
+                                            car.plateNumber,
+                                            style: TextStyle(
+                                              color: Colors.grey[600],
+                                              fontSize: 14.sp,
+                                            ),
+                                          ),
+                                          // Show current assignment if any
+                                          if (car.isAssigned &&
+                                              !isCurrentlyAssigned) ...[
+                                            SizedBox(height: 4.h),
+                                            Text(
+                                              'Currently assigned to another route',
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                                fontSize: 12.sp,
+                                                fontStyle: FontStyle.italic,
+                                              ),
+                                            ),
+                                          ],
+                                          Builder(builder: (context) {
+                                            final destinationController = Get.find<
+                                                JourneyDestinationController>();
+                                            final assignedDestination =
+                                                destinationController
+                                                    .destinations
+                                                    .firstWhereOrNull(
+                                              (dest) =>
+                                                  dest.carId == car.id &&
+                                                  dest.isAssigned &&
+                                                  dest.id !=
+                                                      widget.destination.id,
+                                            );
+
+                                            if (assignedDestination != null) {
+                                              return Padding(
+                                                padding:
+                                                    EdgeInsets.only(top: 4.h),
+                                                child: Container(
+                                                  padding: EdgeInsets.symmetric(
+                                                      horizontal: 6.w,
+                                                      vertical: 2.h),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.red
+                                                        .withOpacity(0.1),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            4.r),
+                                                    border: Border.all(
+                                                        color: Colors.red
+                                                            .withOpacity(0.5)),
+                                                  ),
+                                                  child: Text(
+                                                    'Assigned to ${assignedDestination.description}',
+                                                    style: TextStyle(
+                                                      color: Colors.red,
+                                                      fontSize: 11.sp,
+                                                      fontStyle:
+                                                          FontStyle.italic,
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            }
+
+                                            return const SizedBox();
+                                          }),
+                                        ],
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
+
+                              // Selection radio
                               Radio<String>(
                                 value: car.id,
                                 groupValue: selectedCarId,
                                 onChanged: (value) {
+                                  final destinationController =
+                                      Get.find<JourneyDestinationController>();
+
+                                  // Don't allow selecting a car that's already assigned elsewhere
+                                  final isAssignedElsewhere =
+                                      destinationController.destinations.any(
+                                          (dest) =>
+                                              dest.carId == car.id &&
+                                              dest.id !=
+                                                  widget.destination.id &&
+                                              dest.isAssigned);
+
+                                  if (isAssignedElsewhere) {
+                                    final assignedTo = destinationController
+                                        .destinations
+                                        .firstWhere(
+                                      (dest) => dest.carId == car.id,
+                                    );
+
+                                    Get.snackbar(
+                                      "Vehicle Not Available",
+                                      "This vehicle is currently assigned to route: ${assignedTo.description}",
+                                      snackPosition: SnackPosition.BOTTOM,
+                                      backgroundColor:
+                                          Colors.orange.withOpacity(0.8),
+                                      colorText: Colors.white,
+                                    );
+                                    return;
+                                  }
+
                                   setState(() {
                                     selectedCarId = value;
                                   });

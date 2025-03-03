@@ -1171,7 +1171,7 @@ class DestinationDetailsView extends StatelessWidget {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'Card Plate ${destination.carId.substring(0, 10)}...',
+                                        'Car Plate ${destination.carId.substring(0, 10)}...',
                                         style: TextStyle(
                                           fontSize: 16.sp,
                                           fontWeight: FontWeight.bold,

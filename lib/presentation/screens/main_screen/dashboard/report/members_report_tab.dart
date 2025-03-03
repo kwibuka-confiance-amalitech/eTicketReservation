@@ -182,16 +182,7 @@ class _MembersReportTabState extends State<MembersReportTab> {
                                           ),
                                         ),
                                       ),
-                                      Expanded(
-                                        flex: 1,
-                                        child: Text(
-                                          'Bookings',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14.sp,
-                                          ),
-                                        ),
-                                      ),
+                                      // Removed the Bookings column
                                     ],
                                   ),
                                 ),
@@ -258,17 +249,7 @@ class _MembersReportTabState extends State<MembersReportTab> {
                                             style: TextStyle(fontSize: 14.sp),
                                           ),
                                         ),
-                                        Expanded(
-                                          flex: 1,
-                                          child: Text(
-                                            (member.bookingsCount ?? 0)
-                                                .toString(),
-                                            style: TextStyle(
-                                              fontSize: 14.sp,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ),
+                                        // Removed the Bookings column data
                                       ],
                                     ),
                                   ),

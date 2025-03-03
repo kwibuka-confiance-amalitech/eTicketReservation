@@ -134,39 +134,66 @@ class JourneyDestinationController extends GetxController {
     }
   }
 
-  Future assignCarToDestination(
-      {required String carId, required String destinationId}) async {
+  Future assignCarToDestination({
+    required String carId,
+    required String destinationId,
+  }) async {
     try {
       isAssigningCar = true;
       update();
-      // if (destinations.any((element) => element.carId == carId)) {
-      //   Get.snackbar("Error", "Car has already been assigned to a destination",
-      //       snackPosition: SnackPosition.BOTTOM);
-      //   isAssigningCar = false;
-      //   update();
-      //   return;
-      // } else if (destinations.any((element) => element.id == destinationId)) {
-      //   Get.snackbar("Error", "Destination already has a car assigned to it",
-      //       snackPosition: SnackPosition.BOTTOM);
-      //   isAssigningCar = false;
-      //   update();
-      //   return;
-      // }
 
+      // Check if destination already has a car assigned (that isn't this car)
+      final destination = destinations.firstWhere((d) => d.id == destinationId);
+      if (destination.isAssigned &&
+          destination.carId.isNotEmpty &&
+          destination.carId != carId) {
+        isAssigningCar = false;
+        update();
+        Get.snackbar(
+          "Error",
+          "This route already has a car assigned. Please unassign first or use the Change Vehicle option.",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withOpacity(0.8),
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      // Check if car is already assigned to another destination
+      final isAssigned = await isCarAlreadyAssigned(carId);
+      if (isAssigned) {
+        isAssigningCar = false;
+        update();
+        return; // Error message already shown in isCarAlreadyAssigned method
+      }
+
+      // If all checks pass, proceed with assignment
       await journeyRepository.assignCarToDestination(
-          carId: carId, destinationId: destinationId);
+        carId: carId,
+        destinationId: destinationId,
+      );
+
       await getDestinations();
       isAssigningCar = false;
       update();
-      Get.back();
-      Get.snackbar("Car Assigned", "Car has been assigned to destination",
-          snackPosition: SnackPosition.BOTTOM);
+
+      Get.snackbar(
+        "Success",
+        "Vehicle has been assigned to route",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green.withOpacity(0.8),
+        colorText: Colors.white,
+      );
     } catch (e) {
       isAssigningCar = false;
       update();
-      Get.snackbar("Error", "Error assigning car to destination",
-          snackPosition: SnackPosition.BOTTOM);
-      rethrow;
+      Get.snackbar(
+        "Error",
+        "Failed to assign vehicle: ${e.toString()}",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+      );
     }
   }
 
@@ -187,6 +214,32 @@ class JourneyDestinationController extends GetxController {
       Get.snackbar("Error", "Error unassigning car to destination",
           snackPosition: SnackPosition.BOTTOM);
       rethrow;
+    }
+  }
+
+  // Add this new method to check if car is already assigned
+  Future<bool> isCarAlreadyAssigned(String carId) async {
+    try {
+      // Check if car is assigned to any destination
+      final existingDestination = destinations.firstWhereOrNull(
+        (dest) => dest.carId == carId && dest.isAssigned,
+      );
+
+      if (existingDestination != null) {
+        Get.snackbar(
+          "Vehicle Already Assigned",
+          "This vehicle is already assigned to route: ${existingDestination.description}",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withOpacity(0.8),
+          colorText: Colors.white,
+          duration: const Duration(seconds: 4),
+        );
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Error checking car assignment: $e');
+      return false;
     }
   }
 

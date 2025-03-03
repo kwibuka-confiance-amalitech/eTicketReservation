@@ -12,12 +12,16 @@ dependencies:
 
   cupertino_icons: ^1.0.6
   flutter_screenutil: ^5.9.3
+
+  # Firebase packages
   firebase_core: ^3.2.0
   firebase_auth: ^5.1.2
   cloud_firestore: ^5.1.0
   firebase_storage: ^12.1.1
   firebase_messaging: ^15.0.3
   firebase_analytics: ^11.2.0
+
+  # Other packages
   equatable: ^2.0.5
   get: ^4.6.6
   shared_preferences: ^2.2.3
@@ -27,12 +31,11 @@ dependencies:
   uuid: ^4.4.0
   flutter_stripe: ^11.0.0
   # qr_code_scanner: ^1.0.1
-  http: ^1.2.1
   flutter_dotenv: ^5.1.0
   fluttertoast: ^8.2.5
   qr_flutter: ^4.1.0
   screenshot: ^3.0.0
-  file_saver: ^0.2.13
+  file_saver: ^0.2.13 # Make sure this is included
   flutter_svg: ^2.0.8
   pdf: ^3.10.7
   printing: ^5.11.1
@@ -42,6 +45,18 @@ dependencies:
   flutter_staggered_animations: ^1.1.1
   animations: ^2.0.7
   shimmer: ^3.0.0
+  permission_handler: ^11.0.1
+  share_plus: ^7.2.1
+  path_provider: ^2.1.1
+  mobile_scanner: ^6.0.6
+
+  # HTTP - downgrade to be compatible with gallery_saver
+  http: ^1.2.1
+
+  # Use a forked version of gallery_saver that's compatible with http 1.x
+  # or use the official version with the downgraded http
+  # image_gallery_saver: ^2.0.3
+  # gallery_saver: ^2.3.2  # Comment out this line
 
 dev_dependencies:
   flutter_test:

@@ -17,6 +17,7 @@ class ExcelCar extends Equatable {
   final DateTime nextMaintenance; // Added: date of next scheduled maintenance
   final int bookedSeats;
   final int remainingSeats;
+  final DateTime? createdAt; // Add this field
 
   ExcelCar({
     required this.id,
@@ -35,6 +36,7 @@ class ExcelCar extends Equatable {
     DateTime? nextMaintenance,
     this.bookedSeats = 0, // Default to 0
     this.remainingSeats = 0, // Default to 0
+    this.createdAt, // Add this to constructor
   })  :
         // Initialize DateTime fields with default values if null
         lastMaintenance =
@@ -76,6 +78,7 @@ class ExcelCar extends Equatable {
     DateTime? nextMaintenance,
     int? bookedSeats,
     int? remainingSeats,
+    DateTime? createdAt,
   }) {
     return ExcelCar(
       id: id ?? this.id,
@@ -94,6 +97,7 @@ class ExcelCar extends Equatable {
       nextMaintenance: nextMaintenance ?? this.nextMaintenance,
       bookedSeats: bookedSeats ?? this.bookedSeats,
       remainingSeats: remainingSeats ?? this.remainingSeats,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 
@@ -115,6 +119,7 @@ class ExcelCar extends Equatable {
       'nextMaintenance': nextMaintenance.millisecondsSinceEpoch,
       'bookedSeats': bookedSeats,
       'remainingSeats': remainingSeats,
+      'createdAt': createdAt ?? DateTime.now(), // Add this line
     };
   }
 
@@ -140,6 +145,7 @@ class ExcelCar extends Equatable {
           : DateTime.now().add(const Duration(days: 90)),
       bookedSeats: document['bookedSeats'] ?? 0,
       remainingSeats: document['remainingSeats'] ?? 0,
+      createdAt: document['createdAt']?.toDate(), // Add this line
     );
   }
 
@@ -161,5 +167,6 @@ class ExcelCar extends Equatable {
         nextMaintenance,
         bookedSeats,
         remainingSeats,
+        createdAt,
       ];
 }
