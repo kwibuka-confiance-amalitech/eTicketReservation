@@ -159,7 +159,7 @@ class MyTicketScreen extends StatelessWidget {
                                                         JourneyDestinationController(),
                                                     builder:
                                                         (journeyController) {
-                                                      // Find the destination details using carId
+                                                      // Safely check if destination exists
                                                       final destination =
                                                           journeyController
                                                               .destinations
@@ -182,9 +182,14 @@ class MyTicketScreen extends StatelessWidget {
                                                                       8.r),
                                                         ),
                                                         child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
                                                           children: [
-                                                            Text(
-                                                                destination!
+                                                            if (destination !=
+                                                                null) ...[
+                                                              Text(
+                                                                destination
                                                                     .description,
                                                                 style:
                                                                     TextStyle(
@@ -193,49 +198,90 @@ class MyTicketScreen extends StatelessWidget {
                                                                       600],
                                                                   fontSize:
                                                                       12.sp,
-                                                                )),
-                                                            Row(
-                                                              children: [
-                                                                Text(
-                                                                  destination
-                                                                          .from ??
-                                                                      "Unknown",
-                                                                  style:
-                                                                      TextStyle(
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                    fontSize:
-                                                                        14.sp,
-                                                                  ),
                                                                 ),
-                                                                SizedBox(
-                                                                    width: 4.w),
-                                                                Icon(
-                                                                  Icons
-                                                                      .arrow_forward,
-                                                                  size: 14.sp,
+                                                              ),
+                                                              SizedBox(
+                                                                  height: 8.h),
+                                                              Row(
+                                                                children: [
+                                                                  Icon(
+                                                                    Icons
+                                                                        .location_on,
+                                                                    size: 14.sp,
+                                                                    color: Theme.of(
+                                                                            context)
+                                                                        .primaryColor,
+                                                                  ),
+                                                                  SizedBox(
+                                                                      width:
+                                                                          4.w),
+                                                                  Text(
+                                                                    "${destination.from} → ${destination.to}",
+                                                                    style:
+                                                                        TextStyle(
+                                                                      fontSize:
+                                                                          14.sp,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w500,
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ] else ...[
+                                                              // Show fallback content when destination is deleted
+                                                              Container(
+                                                                padding:
+                                                                    EdgeInsets
+                                                                        .all(8
+                                                                            .w),
+                                                                decoration:
+                                                                    BoxDecoration(
                                                                   color: Colors
-                                                                          .grey[
-                                                                      700],
+                                                                      .orange
+                                                                      .withOpacity(
+                                                                          0.1),
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              4.r),
+                                                                  border: Border.all(
+                                                                      color: Colors
+                                                                          .orange
+                                                                          .withOpacity(
+                                                                              0.3)),
                                                                 ),
-                                                                SizedBox(
-                                                                    width: 4.w),
-                                                                Text(
-                                                                  destination
-                                                                          .to ??
-                                                                      "Unknown",
-                                                                  style:
-                                                                      TextStyle(
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                    fontSize:
-                                                                        14.sp,
-                                                                  ),
+                                                                child: Row(
+                                                                  children: [
+                                                                    Icon(
+                                                                      Icons
+                                                                          .info_outline,
+                                                                      size:
+                                                                          16.sp,
+                                                                      color: Colors
+                                                                              .orange[
+                                                                          700],
+                                                                    ),
+                                                                    SizedBox(
+                                                                        width: 8
+                                                                            .w),
+                                                                    Expanded(
+                                                                      child:
+                                                                          Text(
+                                                                        "Route information no longer available",
+                                                                        style:
+                                                                            TextStyle(
+                                                                          fontSize:
+                                                                              12.sp,
+                                                                          color:
+                                                                              Colors.orange[700],
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  ],
                                                                 ),
-                                                              ],
-                                                            ),
+                                                              ),
+                                                            ],
                                                           ],
                                                         ),
                                                       );
@@ -696,27 +742,44 @@ class MyTicketScreen extends StatelessWidget {
 
   // Generate QR code data from ticket info
   String _generateTicketQRData(dynamic ticket) {
-    // Get the journey destination controller
     final journeyController = Get.find<JourneyDestinationController>();
+    final carController = Get.find<CarController>();
 
-    // Find the destination details
     final destination = journeyController.destinations
         .firstWhereOrNull((d) => d.carId == ticket.carId);
 
-    // Create a map with ticket data
+    final car =
+        carController.cars.firstWhereOrNull((car) => car.id == ticket.carId);
+
     final Map<String, dynamic> ticketData = {
       'type': 'ticket',
       'ticketId': ticket.id,
-      'ticketNumber': ticket.id.substring(0, 8),
+      'ticketNumber': _formatTicketId(ticket.id),
       'carId': ticket.carId,
-      'from': destination?.from ?? 'Unknown',
-      'to': destination?.to ?? 'Unknown',
+      'carPlate': car?.plateNumber ?? 'Unknown',
+      'from': destination?.from ?? 'Unknown Location',
+      'to': destination?.to ?? 'Unknown Location',
+      'description': destination?.description ?? 'Route Deleted',
       'seats': seatsLength(ticket.seatNumbers),
       'price': ticket.price,
       'timestamp': DateTime.now().millisecondsSinceEpoch,
     };
 
     return jsonEncode(ticketData);
+  }
+
+  // Add this helper method to your MyTicketScreen class
+  String _formatTicketId(String? ticketId) {
+    if (ticketId == null || ticketId.isEmpty) {
+      return 'N/A';
+    }
+
+    // Take the first 5 characters if available, otherwise pad with zeros
+    final formattedId = ticketId.length >= 5
+        ? ticketId.substring(0, 5)
+        : ticketId.padRight(5, '0');
+
+    return formattedId.toUpperCase();
   }
 
   // Add this helper method to your MyTicketScreen class
