@@ -1,3 +1,4 @@
+import 'package:car_ticket/controller/dashboard/car_controller.dart';
 import 'package:car_ticket/controller/dashboard/journey_destination_controller.dart';
 import 'package:car_ticket/domain/models/destination/journey_destination.dart';
 import 'package:car_ticket/presentation/screens/main_screen/dashboard/destination/add_destination.dart';
@@ -648,7 +649,7 @@ class DestinationCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          height: 140.h,
+          height: 160.h,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -739,6 +740,38 @@ class DestinationCard extends StatelessWidget {
                               fontSize: 13.sp,
                             ),
                           ),
+                          if (destination.isAssigned &&
+                              destination.carId.isNotEmpty)
+                            Padding(
+                              padding: EdgeInsets.only(top: 8.h),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.directions_car,
+                                    size: 16,
+                                    color: Colors.blue[700],
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  GetBuilder<CarController>(
+                                    builder: (carController) {
+                                      final car = carController.cars
+                                          .firstWhereOrNull((car) =>
+                                              car.id == destination.carId);
+                                      return Text(
+                                        car != null
+                                            ? "Car: ${car.plateNumber}"
+                                            : "Car ID: ${destination.carId.substring(0, 8)}...",
+                                        style: TextStyle(
+                                          color: Colors.blue[700],
+                                          fontSize: 13.sp,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
                           const Spacer(),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1141,54 +1174,77 @@ class DestinationDetailsView extends StatelessWidget {
                               ),
                             ),
                             SizedBox(height: 12.h),
-                            Container(
-                              padding: EdgeInsets.all(16.w),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.grey[300]!,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: EdgeInsets.all(10.w),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Icon(
-                                      Icons.directions_bus,
-                                      color: Theme.of(context).primaryColor,
-                                      size: 30,
+                            GetBuilder<CarController>(
+                              init: CarController(),
+                              builder: (carController) {
+                                final car = carController.cars.firstWhereOrNull(
+                                    (car) => car.id == destination.carId);
+
+                                return Container(
+                                  padding: EdgeInsets.all(16.w),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.grey[300]!,
+                                      width: 1,
                                     ),
                                   ),
-                                  SizedBox(width: 16.w),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                  child: Row(
                                     children: [
-                                      Text(
-                                        'Car Plate ${destination.carId.substring(0, 10)}...',
-                                        style: TextStyle(
-                                          fontSize: 16.sp,
-                                          fontWeight: FontWeight.bold,
+                                      Container(
+                                        padding: EdgeInsets.all(10.w),
+                                        decoration: BoxDecoration(
+                                          color: Colors.blue.withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: Icon(
+                                          Icons.directions_bus,
+                                          color: Theme.of(context).primaryColor,
+                                          size: 30,
                                         ),
                                       ),
-                                      SizedBox(height: 4.h),
-                                      Text(
-                                        'Assigned on: ${(destination.startDate != null) ? DateFormat.yMMMd().format(DateTime.parse(destination.startDate!)) : 'N/A'}',
-                                        style: TextStyle(
-                                          fontSize: 14.sp,
-                                          color: Colors.grey[600],
+                                      SizedBox(width: 16.w),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              car != null
+                                                  ? 'Plate Number: ${car.plateNumber}'
+                                                  : 'Loading vehicle details...',
+                                              style: TextStyle(
+                                                fontSize: 16.sp,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            SizedBox(height: 4.h),
+                                            if (car != null) ...[
+                                              Text(
+                                                'Vehicle: ${car.name} ${car.model}',
+                                                style: TextStyle(
+                                                  fontSize: 14.sp,
+                                                  color: Colors.grey[700],
+                                                ),
+                                              ),
+                                              SizedBox(height: 4.h),
+                                            ],
+                                            Text(
+                                              'Assigned on: ${(destination.startDate != null) ? DateFormat.yMMMd().format(DateTime.parse(destination.startDate!)) : 'N/A'}',
+                                              style: TextStyle(
+                                                fontSize: 14.sp,
+                                                color: Colors.grey[600],
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
                                   ),
-                                ],
-                              ),
+                                );
+                              },
                             ),
                           ],
                         )

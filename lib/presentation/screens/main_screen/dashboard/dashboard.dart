@@ -226,34 +226,16 @@ class CarTicketDashboard extends StatelessWidget {
                       // Navigate to bookings
                     },
                   ),
-                  const Divider(),
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.settings,
-                    title: 'Settings',
-                    onTap: () {
-                      Navigator.pop(context);
-                      // Navigate to settings
-                    },
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.help_outline,
-                    title: 'Help & Support',
-                    onTap: () {
-                      Navigator.pop(context);
-                      // Navigate to help
-                    },
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.info_outline,
-                    title: 'About App',
-                    onTap: () {
-                      Navigator.pop(context);
-                      // Show about dialog
-                    },
-                  ),
+                  // const Divider(),
+                  // _buildDrawerItem(
+                  //   context,
+                  //   icon: Icons.settings,
+                  //   title: 'Settings',
+                  //   onTap: () {
+                  //     Navigator.pop(context);
+                  //     // Navigate to settings
+                  //   },
+                  // ),
                 ],
               ),
             ),

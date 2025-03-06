@@ -4,7 +4,6 @@ import 'package:car_ticket/presentation/widgets/main_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get_state_manager/get_state_manager.dart';
-import 'package:get/route_manager.dart';
 
 class CarAvailableDetails extends StatelessWidget {
   static const String routeName = '/car_details';
@@ -403,25 +402,6 @@ class ShowPickupLocation {
                                         SizedBox(
                                           height: 20.h,
                                         ),
-                                        MainButton(
-                                            isColored: false,
-                                            onPressed: () {
-                                              Get.dialog(AlertDialog(
-                                                title: const Text(
-                                                    "Payment with Momo"),
-                                                content: const Text(
-                                                    "Please dial *182*8# to pay with Momo"),
-                                                actions: [
-                                                  TextButton(
-                                                      onPressed: () {
-                                                        Get.back();
-                                                      },
-                                                      child:
-                                                          const Text("Close"))
-                                                ],
-                                              ));
-                                            },
-                                            title: "Pay with Momo"),
                                       ],
                                     ),
                                   ],

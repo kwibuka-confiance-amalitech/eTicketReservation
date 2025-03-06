@@ -13,12 +13,29 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  var index = 0;
   bool isLogin = true;
 
   @override
   void initState() {
-    _tabController = TabController(initialIndex: 0, length: 2, vsync: this);
     super.initState();
+    _tabController = TabController(initialIndex: 0, length: 2, vsync: this);
+    // Add listener to handle tab changes
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        setState(() {
+          index = _tabController.index;
+          isLogin = index == 0;
+        });
+      }
+    });
+  }
+
+  // Don't forget to dispose the controller
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -64,8 +81,7 @@ class _AuthScreenState extends State<AuthScreen>
                   children: [
                     Container(
                       margin: const EdgeInsets.only(top: 40, bottom: 20),
-                      child: Text(
-                          _tabController.index == 0 ? 'Login' : 'Sign Up',
+                      child: Text(index == 0 ? 'Login' : 'Sign Up',
                           style: const TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,

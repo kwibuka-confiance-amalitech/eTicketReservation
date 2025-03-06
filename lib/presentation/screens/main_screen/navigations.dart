@@ -29,10 +29,10 @@ class Navigations extends StatelessWidget {
                     ),
                     label: 'Home',
                   ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.qr_code_scanner_rounded),
-                    label: 'Scan QR Code',
-                  ),
+                  // BottomNavigationBarItem(
+                  //   icon: Icon(Icons.qr_code_scanner_rounded),
+                  //   label: 'Scan QR Code',
+                  // ),
                   BottomNavigationBarItem(
                     icon: Icon(Icons.person),
                     label: 'Profile',

@@ -1,4 +1,5 @@
 import 'package:car_ticket/controller/dashboard/car_controller.dart';
+import 'package:car_ticket/controller/dashboard/journey_destination_controller.dart';
 import 'package:car_ticket/domain/repositories/user/firebase_user_repository.dart';
 import 'package:car_ticket/domain/repositories/user/user_repository.dart';
 import 'package:car_ticket/presentation/screens/auth/auth_screen.dart';
@@ -40,6 +41,7 @@ void main() async {
 
   // Initialize controllers
   Get.put(CarController(), permanent: true);
+  Get.put(JourneyDestinationController(), permanent: true);
   // ... other controllers initialization
 
   print('Starting app...');

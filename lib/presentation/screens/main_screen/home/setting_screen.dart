@@ -112,7 +112,7 @@ class SettingsItems {
           Get.toNamed(MyPayments.routeName);
         }),
     SettingsItems(
-        title: "Tickets",
+        title: "My Invoices",
         icon: Icons.description_outlined,
         onTap: () {
           Get.toNamed(MyTicketScreen.routeName);
