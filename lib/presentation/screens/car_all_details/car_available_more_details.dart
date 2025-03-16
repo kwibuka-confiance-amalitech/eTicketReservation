@@ -1,9 +1,9 @@
 import 'package:car_ticket/controller/home/selected_destination.dart';
+import 'package:car_ticket/domain/models/seat.dart';
 import 'package:car_ticket/presentation/screens/car_all_details/seat_widget.dart';
-import 'package:car_ticket/presentation/widgets/main_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get_state_manager/get_state_manager.dart';
+import 'package:get/get.dart';
 
 class CarAvailableDetails extends StatelessWidget {
   static const String routeName = '/car_details';
@@ -271,7 +271,10 @@ class CarAvailableDetails extends StatelessWidget {
                                 horizontal: 20, vertical: 20),
                             child: ElevatedButton(
                               onPressed: () {
-                                ShowPickupLocation().show(context);
+                                ShowPickupLocation().show(
+                                    context,
+                                    selectedDestinationController
+                                        .selectedSeats);
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.deepPurple,
@@ -289,130 +292,249 @@ class CarAvailableDetails extends StatelessWidget {
 }
 
 class ShowPickupLocation {
-  show(BuildContext context) {
+  show(BuildContext context, List<Seat> selectedSeats) {
     showDialog(
-        context: context,
-        builder: (context) => GetBuilder(builder:
-                (SelectedDestinationController selectedDestinationController) {
-              return AlertDialog(
-                title: const Text("Select your location"),
-                content: Wrap(
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("Please select your pickup location"),
-                        const SizedBox(
-                          height: 15,
-                        ),
-                        Container(
-                          width: MediaQuery.of(context).size.width,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          decoration: BoxDecoration(
-                              border: Border.all(
-                                  color: Colors.grey.shade400,
-                                  width: 1.5,
-                                  style: BorderStyle.solid),
-                              borderRadius: BorderRadius.circular(10)),
-                          child: DropdownButton<String>(
-                            value: selectedDestinationController
-                                .selectedDestinationOption,
-                            isExpanded: true,
-                            icon: const Icon(Icons.arrow_downward),
-                            iconSize: 16,
-                            elevation: 16,
-                            hint: const Text("Your location"),
-                            style: const TextStyle(
-                                color: Color.fromARGB(255, 71, 71, 71)),
-                            underline: Container(
-                              height: 0,
-                              color: const Color.fromARGB(255, 68, 68, 68),
-                            ),
-                            onChanged: selectedDestinationController
-                                .selectedPickupLocationHandler,
-                            items: exactLocations.map<DropdownMenuItem<String>>(
-                                (ExactLocation value) {
-                              return DropdownMenuItem<String>(
-                                value: value.name.toString(),
-                                child: Row(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 14,
-                                      backgroundColor: Theme.of(context)
-                                          .colorScheme
-                                          .secondary,
-                                      foregroundColor: Colors.white,
-                                      child: Text(
-                                        value.name.substring(0, 1),
-                                        style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600),
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                      width: 10,
-                                    ),
-                                    Text(
-                                      value.name,
-                                    ),
-                                  ],
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => GetBuilder<SelectedDestinationController>(
+        builder: (selectedDestinationController) {
+          return AlertDialog(
+            title: Text(
+              "Select your location",
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Please select your pickup location",
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 14.sp,
+                  ),
+                ),
+                SizedBox(height: 15.h),
+                Container(
+                  width: MediaQuery.of(context).size.width,
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Colors.grey.shade400,
+                      width: 1.5,
+                    ),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: DropdownButton<String>(
+                    value: selectedDestinationController.selectedPickupLocation,
+                    isExpanded: true,
+                    icon: const Icon(Icons.arrow_drop_down),
+                    iconSize: 24.sp,
+                    elevation: 16,
+                    hint: Text(
+                      "Your pickup location",
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                    style: TextStyle(
+                      color: Colors.grey[800],
+                      fontSize: 14.sp,
+                    ),
+                    underline: Container(height: 0),
+                    onChanged: (String? value) {
+                      selectedDestinationController
+                          .selectedPickupLocationHandler(value);
+                    },
+                    items: exactLocations
+                        .map<DropdownMenuItem<String>>(
+                          (location) => DropdownMenuItem<String>(
+                            value: location.name,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.location_on,
+                                  color: Theme.of(context).primaryColor,
+                                  size: 18.sp,
                                 ),
-                              );
-                            }).toList(),
+                                SizedBox(width: 8.w),
+                                Text(location.name),
+                              ],
+                            ),
                           ),
+                        )
+                        .toList(),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (selectedDestinationController.selectedPickupLocation ==
+                      null) {
+                    Get.snackbar(
+                      'Error',
+                      'Please select your pickup location',
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                    );
+                    return;
+                  }
+                  Navigator.pop(context);
+
+                  // Show payment sheet with selected location
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => PaymentBottomSheet(
+                      seats: selectedSeats,
+                      carId: selectedDestinationController
+                          .selectedDestination.value.carId,
+                      pickupLocation:
+                          selectedDestinationController.selectedPickupLocation!,
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+                ),
+                child: Text(
+                  'Continue',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+// Add this PaymentBottomSheet widget
+class PaymentBottomSheet extends StatelessWidget {
+  final List<Seat> seats;
+  final String carId;
+  final String pickupLocation;
+
+  const PaymentBottomSheet({
+    super.key,
+    required this.seats,
+    required this.carId,
+    required this.pickupLocation,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: GetBuilder<SelectedDestinationController>(
+        builder: (controller) {
+          // Verify pickup location
+          if (pickupLocation.isEmpty) {
+            Get.back();
+            Get.snackbar(
+              'Error',
+              'Please select a pickup location',
+              backgroundColor: Colors.red,
+              colorText: Colors.white,
+            );
+            return const SizedBox.shrink();
+          }
+
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Text(
+                      'Complete Payment',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 12),
+                    // Show selected pickup location
+                    Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey[200]!),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.location_on, color: Colors.orange[700]),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Pickup Location',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                Text(
+                                  pickupLocation,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () => controller.payPriceHandler(
+                        carId: carId,
+                        seats: seats,
+                        pickupLocation: pickupLocation,
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        minimumSize: Size(double.infinity, 50),
+                      ),
+                      child: Text(
+                        'Pay Now',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
-                actions: [
-                  TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        showModalBottomSheet(
-                            context: context,
-                            builder: (context) {
-                              return Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(20.0),
-                                child: Wrap(
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text("Select your payment method",
-                                            style: TextStyle(fontSize: 18.0)),
-                                        SizedBox(
-                                          height: 20.h,
-                                        ),
-                                        MainButton(
-                                            isColored: false,
-                                            onPressed: () => selectedDestinationController
-                                                .payPriceHandler(
-                                                    carId:
-                                                        selectedDestinationController
-                                                            .selectedDestination
-                                                            .value
-                                                            .carId,
-                                                    seats:
-                                                        selectedDestinationController
-                                                            .selectedSeats),
-                                            title: "Pay with Card"),
-                                        SizedBox(
-                                          height: 20.h,
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              );
-                            });
-                      },
-                      child: const Text("Continue"))
-                ],
-              );
-            }));
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 }
 

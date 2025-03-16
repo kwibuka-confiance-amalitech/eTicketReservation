@@ -12,6 +12,9 @@ class ReportController extends GetxController {
   List<Map<String, dynamic>> earningsData = [];
   List<MyUser> membersData = [];
   List<Map<String, dynamic>> dailyEarnings = [];
+  List<Map<String, dynamic>> cancelledTicketsData = [];
+  int totalCancelledTickets = 0;
+  double totalCancelledAmount = 0;
 
   int totalBookings = 0;
   double totalRevenue = 0;
@@ -207,6 +210,113 @@ class ReportController extends GetxController {
       isLoadingMembers = false;
       update();
     }
+  }
+
+  Future<void> getCancelledTicketsData(
+      DateTime startDate, DateTime endDate) async {
+    try {
+      isLoadingEarnings = true;
+      update();
+
+      // Normalize dates
+      final startDateTime =
+          DateTime(startDate.year, startDate.month, startDate.day);
+      final endDateTime =
+          DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
+
+      // Fetch cancelled tickets
+      final ticketsQuery = await _firestore
+          .collection('tickets')
+          .where('isCancelled', isEqualTo: true)
+          .get();
+
+      final userCache = <String, Map<String, dynamic>>{};
+
+      // Process tickets with user data
+      final allCancelledTickets = await Future.wait(
+        ticketsQuery.docs.map((doc) async {
+          final ticket = doc.data();
+          final userId = ticket['userId'] as String?;
+
+          if (userId != null && !userCache.containsKey(userId)) {
+            final userDoc =
+                await _firestore.collection('users').doc(userId).get();
+            userCache[userId] = userDoc.data() ?? {};
+          }
+
+          return {
+            ...ticket,
+            'customerName': userCache[userId]?['name'] ?? 'Unknown User',
+          };
+        }),
+      );
+
+      // Process tickets
+      final filteredCancelledTickets = allCancelledTickets.where((ticket) {
+        if (ticket['cancelledAt'] == null) return false;
+        final cancelDate = (ticket['cancelledAt'] as Timestamp).toDate();
+        return cancelDate.isAfter(startDateTime) &&
+            cancelDate.isBefore(endDateTime);
+      }).toList();
+
+      // Group by date
+      final Map<String, List<Map<String, dynamic>>> ticketsByDate = {};
+
+      for (var ticket in filteredCancelledTickets) {
+        final cancelDate = (ticket['cancelledAt'] as Timestamp).toDate();
+        final dateStr = DateFormat('yyyy-MM-dd').format(cancelDate);
+
+        if (!ticketsByDate.containsKey(dateStr)) {
+          ticketsByDate[dateStr] = [];
+        }
+        ticketsByDate[dateStr]!.add(ticket);
+      }
+
+      // Calculate daily stats
+      cancelledTicketsData = [];
+      totalCancelledTickets = 0;
+      totalCancelledAmount = 0;
+
+      ticketsByDate.forEach((date, tickets) {
+        final count = tickets.length;
+        final amount = tickets.fold<double>(
+          0,
+          (sum, ticket) =>
+              sum + (double.tryParse(ticket['price'].toString()) ?? 0),
+        );
+
+        cancelledTicketsData.add({
+          'date': _formatReportDate(date),
+          'count': count.toString(),
+          'amount': 'RWF ${NumberFormat("#,###").format(amount)}',
+          'reasons': _getCancellationReasons(tickets),
+          'customerName': tickets.map((t) => t['customerName']).join(', '),
+        });
+
+        totalCancelledTickets += count;
+        totalCancelledAmount += amount;
+      });
+
+      // Sort by date
+      cancelledTicketsData.sort((a, b) {
+        return DateFormat('MMM dd, yyyy')
+            .parse(a['date'])
+            .compareTo(DateFormat('MMM dd, yyyy').parse(b['date']));
+      });
+    } catch (e) {
+      print('Error fetching cancelled tickets data: $e');
+    } finally {
+      isLoadingEarnings = false;
+      update();
+    }
+  }
+
+  String _getCancellationReasons(List<Map<String, dynamic>> tickets) {
+    final reasons = tickets
+        .map((ticket) => ticket['cancellationReason'] ?? 'No reason provided')
+        .toSet()
+        .toList();
+    return reasons.join(', ');
   }
 
   String _formatReportDate(String dateStr) {

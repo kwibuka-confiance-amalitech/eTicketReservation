@@ -57,11 +57,18 @@ class _CarsScreenState extends State<CarsScreen> {
 
   Widget _buildAppBar(BuildContext context) {
     return SliverAppBar(
-      expandedHeight: 220.h,
+      expandedHeight: 250.h,
       pinned: true,
       floating: false,
       backgroundColor: Theme.of(context).primaryColor,
+      iconTheme:
+          const IconThemeData(color: Colors.white), // Fix back button color
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
       flexibleSpace: FlexibleSpaceBar(
+        titlePadding: EdgeInsets.zero,
         background: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -88,23 +95,11 @@ class _CarsScreenState extends State<CarsScreen> {
                   ),
                 ),
               ),
-              Positioned(
-                bottom: -20,
-                left: -20,
-                child: Container(
-                  width: 100.w,
-                  height: 100.h,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.1),
-                  ),
-                ),
-              ),
-
               // Content
               SafeArea(
                 child: Padding(
-                  padding: EdgeInsets.all(20.w),
+                  padding: EdgeInsets.fromLTRB(
+                      20.w, 60.h, 20.w, 20.h), // Adjust top padding
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -124,7 +119,7 @@ class _CarsScreenState extends State<CarsScreen> {
                           fontSize: 14.sp,
                         ),
                       ),
-                      SizedBox(height: 20.h),
+                      SizedBox(height: 8.h),
                       GetBuilder<CarController>(
                         init: CarController(),
                         builder: (controller) {
@@ -157,8 +152,30 @@ class _CarsScreenState extends State<CarsScreen> {
             ],
           ),
         ),
-        collapseMode: CollapseMode.parallax,
       ),
+      actions: [
+        GetBuilder<CarController>(
+          builder: (carController) {
+            return IconButton(
+              icon: carController.isGettingCars
+                  ? SizedBox(
+                      width: 20.w,
+                      height: 20.h,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor:
+                            const AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Icon(Icons.refresh, color: Colors.white),
+              onPressed: carController.isGettingCars
+                  ? null
+                  : () => carController.getCars(),
+            );
+          },
+        ),
+        SizedBox(width: 8.w),
+      ],
     );
   }
 

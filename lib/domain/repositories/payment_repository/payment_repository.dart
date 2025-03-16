@@ -11,14 +11,16 @@ abstract class PaymentRepository {
       List<Seat> carSeats,
       String destinationId,
       String carDestinationFromTime,
-      String carDestinationToTime);
+      String carDestinationToTime,
+      String pickupLocation);
   Future<void> displayPaymentSheet(
       String carId,
       List<Seat> carSeats,
       String clientSecret,
       String destinationId,
       String carDestinationFromTime,
-      String carDestinationToTime);
+      String carDestinationToTime,
+      String pickupLocation);
   String calculateAmount(String price);
   Future<void> saveCustomerPaymentsInDb(UserPayment userPayment);
   Future<void> createTicket(
@@ -27,11 +29,15 @@ abstract class PaymentRepository {
       required String destinationId,
       required String ticketAmount,
       required String carDestinationFromTime,
-      required String carDestinationToTime});
+      required String carDestinationToTime,
+      required String pickupLocation});
   Future<List<ExcelTicket>> getTickets();
   Future<List<ExcelTicket>> getMyTickets({required String userId});
   Future<void> updateTicket(ExcelTicket ticket);
 
   Future<List<UserPayment>> getCustomerPayments(String userId);
   Future<List<UserPayment>> getAllPayments();
+  Future<void> cancelTicket(String ticketId);
+  Future<void> updateCarSeatsAfterCancellation(
+      String carId, List<String> seatNumbers);
 }

@@ -8,6 +8,7 @@ import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:screenshot/screenshot.dart';
@@ -275,6 +276,85 @@ class TicketDetailsScreen extends StatelessWidget {
                             _buildDashedDivider(),
                             SizedBox(height: 24.h),
 
+                            // Add Pickup Location Section
+                            _buildSectionTitle("Pickup Location"),
+                            SizedBox(height: 16.h),
+                            Container(
+                              padding: EdgeInsets.all(16.w),
+                              decoration: BoxDecoration(
+                                color: ticket.pickupLocation?.isNotEmpty == true
+                                    ? Colors.grey[50]
+                                    : Colors.orange[50],
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(
+                                  color:
+                                      ticket.pickupLocation?.isNotEmpty == true
+                                          ? Colors.grey[200]!
+                                          : Colors.orange[200]!,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.all(8.w),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          ticket.pickupLocation?.isNotEmpty ==
+                                                  true
+                                              ? Colors.green.withOpacity(0.1)
+                                              : Colors.orange.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8.r),
+                                    ),
+                                    child: Icon(
+                                      Icons.location_on,
+                                      color:
+                                          ticket.pickupLocation?.isNotEmpty ==
+                                                  true
+                                              ? Colors.green
+                                              : Colors.orange[700],
+                                      size: 24.sp,
+                                    ),
+                                  ),
+                                  SizedBox(width: 16.w),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Pickup Point',
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                        SizedBox(height: 4.h),
+                                        Text(
+                                          ticket.pickupLocation?.isNotEmpty ==
+                                                  true
+                                              ? ticket.pickupLocation!
+                                              : 'Not selected',
+                                          style: TextStyle(
+                                            fontSize: 16.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: ticket.pickupLocation
+                                                        ?.isNotEmpty ==
+                                                    true
+                                                ? Colors.grey[800]
+                                                : Colors.orange[700],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            SizedBox(height: 24.h),
+                            _buildDashedDivider(),
+                            SizedBox(height: 24.h),
+
                             // Vehicle Information Section
                             _buildSectionTitle("Vehicle Information"),
                             SizedBox(height: 16.h),
@@ -401,6 +481,54 @@ class TicketDetailsScreen extends StatelessWidget {
                             SizedBox(height: 8.h),
                             _buildDetailRow(
                                 "Time", timeChanged(ticket.createdAt)),
+                            if (ticket.isCancelled) ...[
+                              SizedBox(height: 16.h),
+                              Container(
+                                padding: EdgeInsets.all(12.w),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8.r),
+                                  border: Border.all(
+                                      color: Colors.red.withOpacity(0.3)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.cancel_outlined,
+                                      size: 20.sp,
+                                      color: Colors.red[700],
+                                    ),
+                                    SizedBox(width: 12.w),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Ticket Cancelled',
+                                            style: TextStyle(
+                                              fontSize: 14.sp,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.red[700],
+                                            ),
+                                          ),
+                                          if (ticket.cancelledAt != null) ...[
+                                            SizedBox(height: 4.h),
+                                            Text(
+                                              'Cancelled on ${DateFormat('MMM dd, yyyy • hh:mm a').format(ticket.cancelledAt!)}',
+                                              style: TextStyle(
+                                                fontSize: 12.sp,
+                                                color: Colors.red[700],
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
 
                             SizedBox(height: 24.h),
                             _buildDashedDivider(),
@@ -574,6 +702,8 @@ class TicketDetailsScreen extends StatelessWidget {
       'price': ticket.price,
       'fromTime': ticket.carDestinationFromTime,
       'toTime': ticket.carDestinationToTime,
+      'pickupLocation':
+          ticket.pickupLocation ?? 'Not selected', // Add pickup location
       'timestamp': DateTime.now().millisecondsSinceEpoch,
     };
 

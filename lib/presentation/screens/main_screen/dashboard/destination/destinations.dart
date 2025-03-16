@@ -5,6 +5,7 @@ import 'package:car_ticket/presentation/screens/main_screen/dashboard/destinatio
 import 'package:car_ticket/presentation/screens/main_screen/dashboard/destination/edit_destination.dart';
 import 'package:car_ticket/presentation/widgets/dashboard/assignings/assign_car_to_destination.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get/get.dart';
@@ -71,112 +72,89 @@ class _DestinationsScreenState extends State<DestinationsScreen> {
 
   Widget _buildAppBar(BuildContext context) {
     return SliverAppBar(
-      expandedHeight: 220.h,
+      expandedHeight: 180.h,
       pinned: true,
+      floating: false,
       backgroundColor: Theme.of(context).primaryColor,
+      // Fix system UI styling
+      systemOverlayStyle: const SystemUiOverlayStyle(
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      // Fix icon theming
+      iconTheme: const IconThemeData(color: Colors.white),
+      // Explicit white back button
+      leading: IconButton(
+        icon: const Icon(
+          Icons.arrow_back,
+          color: Colors.white,
+        ),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
               colors: [
                 Theme.of(context).primaryColor,
                 Theme.of(context).primaryColor.withOpacity(0.8),
               ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
-          child: Stack(
-            children: [
-              // Decorative elements
-              Positioned(
-                top: -20,
-                right: -30,
-                child: CircleAvatar(
-                  radius: 80,
-                  backgroundColor: Colors.white.withOpacity(0.1),
-                ),
-              ),
-              Positioned(
-                bottom: 0,
-                left: 0,
-                child: Container(
-                  height: 80,
-                  width: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
-                    borderRadius: const BorderRadius.only(
-                      topRight: Radius.circular(100),
+          child: SafeArea(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(20.w, 60.h, 20.w, 20.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Destinations',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 28.sp,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-              ),
-              // Content
-              SafeArea(
-                child: Padding(
-                  padding: EdgeInsets.all(20.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          // const BackButton(color: Colors.white),
-                          const Expanded(child: SizedBox()),
-                          IconButton(
-                            onPressed: () {},
-                            icon: const Icon(Icons.notifications_outlined,
-                                color: Colors.white),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Travel Routes',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 24,
-                                ),
-                              ),
-                              SizedBox(height: 8.h),
-                              Text(
-                                'Manage your journey destinations',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Container(
-                            padding: EdgeInsets.all(10.w),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.map_outlined,
-                              color: Colors.white,
-                              size: 28,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                    ],
+                  SizedBox(height: 8.h),
+                  Text(
+                    'Manage your journey destinations',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 14.sp,
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
+      // Add refresh action
+      actions: [
+        GetBuilder<JourneyDestinationController>(
+          builder: (controller) {
+            return IconButton(
+              icon: controller.isGettingDestinations
+                  ? SizedBox(
+                      width: 20.w,
+                      height: 20.h,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor:
+                            const AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Icon(Icons.refresh, color: Colors.white),
+              onPressed: controller.isGettingDestinations
+                  ? null
+                  : () => controller.getDestinations(),
+            );
+          },
+        ),
+        SizedBox(width: 8.w),
+      ],
     );
   }
 

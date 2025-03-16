@@ -1,4 +1,5 @@
 import 'package:car_ticket/controller/dashboard/report_controller.dart';
+import 'package:car_ticket/presentation/screens/main_screen/dashboard/report/cancelled_tickets_tab.dart';
 import 'package:car_ticket/presentation/screens/main_screen/dashboard/report/earnings_report_tab.dart';
 import 'package:car_ticket/presentation/screens/main_screen/dashboard/report/members_report_tab.dart';
 import 'package:flutter/material.dart';
@@ -25,7 +26,8 @@ class _DashboardReportScreenState extends State<DashboardReportScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController =
+        TabController(length: 3, vsync: this); // Changed from 2 to 3
 
     // Make sure controller exists
     if (!Get.isRegistered<ReportController>()) {
@@ -51,8 +53,10 @@ class _DashboardReportScreenState extends State<DashboardReportScreen>
 
     if (_tabController.index == 0) {
       controller.getEarningsReportData(_startDate, _endDate);
-    } else {
+    } else if (_tabController.index == 1) {
       controller.getMembersReportData(_startDate, _endDate);
+    } else {
+      controller.getCancelledTicketsData(_startDate, _endDate);
     }
   }
 
@@ -64,8 +68,9 @@ class _DashboardReportScreenState extends State<DashboardReportScreen>
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(text: 'Earnings Report'),
-            Tab(text: 'Members Report'),
+            Tab(text: 'Earnings'),
+            Tab(text: 'Members'),
+            Tab(text: 'Cancellations'), // New tab
           ],
         ),
         actions: [
@@ -88,6 +93,8 @@ class _DashboardReportScreenState extends State<DashboardReportScreen>
         children: [
           EarningsReportTab(startDate: _startDate, endDate: _endDate),
           MembersReportTab(startDate: _startDate, endDate: _endDate),
+          CancelledTicketsTab(
+              startDate: _startDate, endDate: _endDate), // New tab
         ],
       ),
     );
@@ -115,8 +122,11 @@ class _DashboardReportScreenState extends State<DashboardReportScreen>
     final controller = Get.find<ReportController>();
     final pdf = pw.Document();
 
-    final isEarningsReport = _tabController.index == 0;
-    final reportTitle = isEarningsReport ? 'Earnings Report' : 'Members Report';
+    final reportType = _tabController.index == 0
+        ? 'Earnings'
+        : _tabController.index == 1
+            ? 'Members'
+            : 'Cancelled Tickets';
 
     // Create PDF content based on the active tab
     pdf.addPage(
@@ -133,7 +143,7 @@ class _DashboardReportScreenState extends State<DashboardReportScreen>
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
-                      reportTitle,
+                      reportType,
                       style: pw.TextStyle(
                         fontSize: 24,
                         fontWeight: pw.FontWeight.bold,
@@ -171,7 +181,7 @@ class _DashboardReportScreenState extends State<DashboardReportScreen>
               pw.SizedBox(height: 20),
 
               // Summary section
-              if (isEarningsReport) ...[
+              if (_tabController.index == 0) ...[
                 pw.Text(
                   'Summary',
                   style: pw.TextStyle(
@@ -205,7 +215,7 @@ class _DashboardReportScreenState extends State<DashboardReportScreen>
               pw.SizedBox(height: 10),
 
               // Table
-              isEarningsReport
+              _tabController.index == 0
                   ? pw.Table.fromTextArray(
                       headers: [
                         'Date',
@@ -227,22 +237,39 @@ class _DashboardReportScreenState extends State<DashboardReportScreen>
                       cellAlignment: pw.Alignment.centerLeft,
                       cellAlignments: {0: pw.Alignment.centerLeft},
                     )
-                  : pw.Table.fromTextArray(
-                      headers: ['Name', 'Email', 'Join Date', 'Bookings'],
-                      data: controller.membersData
-                          .map((member) => [
-                                member.name.isNotEmpty
-                                    ? member.name
-                                    : 'Unknown',
-                                member.email,
-                                _formatDate(member.createdAt),
-                                (member.bookingsCount ?? 0).toString(),
-                              ])
-                          .toList(),
-                      headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                      headerDecoration:
-                          const pw.BoxDecoration(color: PdfColors.grey300),
-                    ),
+                  : _tabController.index == 1
+                      ? pw.Table.fromTextArray(
+                          headers: ['Name', 'Email', 'Join Date', 'Bookings'],
+                          data: controller.membersData
+                              .map((member) => [
+                                    member.name.isNotEmpty
+                                        ? member.name
+                                        : 'Unknown',
+                                    member.email,
+                                    _formatDate(member.createdAt),
+                                    (member.bookingsCount ?? 0).toString(),
+                                  ])
+                              .toList(),
+                          headerStyle:
+                              pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                          headerDecoration:
+                              const pw.BoxDecoration(color: PdfColors.grey300),
+                        )
+                      : pw.Table.fromTextArray(
+                          headers: ['Date', 'Tickets', 'Amount', 'Reasons'],
+                          data: controller.cancelledTicketsData
+                              .map((entry) => [
+                                    entry['date'],
+                                    entry['count'],
+                                    entry['amount'],
+                                    entry['reasons'],
+                                  ])
+                              .toList(),
+                          headerStyle:
+                              pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                          headerDecoration:
+                              const pw.BoxDecoration(color: PdfColors.grey300),
+                        ),
             ],
           );
         },
@@ -252,7 +279,7 @@ class _DashboardReportScreenState extends State<DashboardReportScreen>
     await Printing.sharePdf(
         bytes: await pdf.save(),
         filename:
-            '${reportTitle.toLowerCase().replaceAll(' ', '_')}_${DateFormat('yyyyMMdd').format(DateTime.now())}.pdf');
+            '${reportType.toLowerCase().replaceAll(' ', '_')}_${DateFormat('yyyyMMdd').format(DateTime.now())}.pdf');
   }
 
   pw.Widget _buildPdfSummaryItem(String label, String value) {

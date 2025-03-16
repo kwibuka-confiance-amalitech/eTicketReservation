@@ -1,7 +1,9 @@
 import 'package:car_ticket/controller/dashboard/customers.dart';
+import 'package:car_ticket/presentation/widgets/common/refresh_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
-import 'package:get/get_state_manager/get_state_manager.dart';
+import 'package:get/get.dart';
 
 class UsersScreen extends StatefulWidget {
   static const String routeName = '/users';
@@ -24,13 +26,19 @@ class _UsersScreenState extends State<UsersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          _buildAppBar(context),
-          _buildSearchBar(context),
-          _buildUserStats(context),
-          _buildUsersList(context),
-        ],
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await Get.find<CustomersController>().getCustomers();
+        },
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            _buildAppBar(context),
+            _buildSearchBar(context),
+            _buildUserStats(context),
+            _buildUsersList(context),
+          ],
+        ),
       ),
     );
   }
@@ -41,7 +49,14 @@ class _UsersScreenState extends State<UsersScreen> {
       pinned: true,
       stretch: true,
       backgroundColor: Theme.of(context).primaryColor,
+      iconTheme:
+          const IconThemeData(color: Colors.white), // Fix back button color
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
       flexibleSpace: FlexibleSpaceBar(
+        titlePadding: EdgeInsets.zero, // Remove default title padding
         background: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -73,7 +88,8 @@ class _UsersScreenState extends State<UsersScreen> {
               ),
               SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: EdgeInsets.fromLTRB(20.w, 60.h, 20.w,
+                      20.h), // Adjust top padding to avoid overlap
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -85,7 +101,7 @@ class _UsersScreenState extends State<UsersScreen> {
                           fontSize: 24,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8.h),
                       Text(
                         'View and manage all registered users',
                         style: TextStyle(
@@ -101,6 +117,15 @@ class _UsersScreenState extends State<UsersScreen> {
           ),
         ),
       ),
+      actions: [
+        GetBuilder<CustomersController>(builder: (customersController) {
+          return RefreshButton(
+            isLoading: customersController.isGettingCustomers,
+            onRefresh: () => customersController.getCustomers(),
+          );
+        }),
+        SizedBox(width: 8.w),
+      ],
     );
   }
 
@@ -246,6 +271,15 @@ class _UsersScreenState extends State<UsersScreen> {
       child: GetBuilder<CustomersController>(
         init: CustomersController(),
         builder: (customersController) {
+          if (customersController.isGettingCustomers) {
+            return Center(
+              child: Padding(
+                padding: EdgeInsets.all(20.w),
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+
           if (customersController.customers.isEmpty) {
             return _buildEmptyState(context);
           }
@@ -264,7 +298,7 @@ class _UsersScreenState extends State<UsersScreen> {
           }
 
           return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: EdgeInsets.symmetric(horizontal: 20.w),
             child: AnimationLimiter(
               child: ListView.builder(
                 shrinkWrap: true,

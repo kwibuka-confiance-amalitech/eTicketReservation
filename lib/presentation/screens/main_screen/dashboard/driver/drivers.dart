@@ -40,8 +40,7 @@ class _DriversScreenState extends State<DriversScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             _buildAppBar(context),
-            _buildSearchBar(),
-            _buildDriverStats(),
+            _buildSearchBar(), // This now includes both search and stats
             _buildDriversList(),
           ],
         ),
@@ -59,7 +58,14 @@ class _DriversScreenState extends State<DriversScreen> {
     return SliverAppBar(
       expandedHeight: 180,
       pinned: true,
+      stretch: true,
       backgroundColor: Theme.of(context).primaryColor,
+      iconTheme:
+          const IconThemeData(color: Colors.white), // Fix back button color
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: BoxDecoration(
@@ -83,24 +89,11 @@ class _DriversScreenState extends State<DriversScreen> {
                   backgroundColor: Colors.white.withOpacity(0.1),
                 ),
               ),
-              Positioned(
-                bottom: 0,
-                left: 0,
-                child: Container(
-                  height: 80,
-                  width: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
-                    borderRadius: const BorderRadius.only(
-                      topRight: Radius.circular(100),
-                    ),
-                  ),
-                ),
-              ),
               // Content
               SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: EdgeInsets.fromLTRB(20.w, 60.h, 20.w,
+                      20.h), // Add top padding to avoid overlap
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -118,7 +111,7 @@ class _DriversScreenState extends State<DriversScreen> {
                                   fontSize: 24,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              SizedBox(height: 8.h),
                               Text(
                                 'Manage your fleet drivers efficiently',
                                 style: TextStyle(
@@ -127,19 +120,6 @@ class _DriversScreenState extends State<DriversScreen> {
                                 ),
                               ),
                             ],
-                          ),
-                          Container(
-                            height: 50,
-                            width: 50,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.drive_eta,
-                              color: Colors.white,
-                              size: 28,
-                            ),
                           ),
                         ],
                       ),
@@ -151,149 +131,143 @@ class _DriversScreenState extends State<DriversScreen> {
           ),
         ),
       ),
+      actions: [
+        GetBuilder<DriverController>(
+          builder: (controller) {
+            return IconButton(
+              icon: controller.isGettingDrivers
+                  ? SizedBox(
+                      width: 20.w,
+                      height: 20.h,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor:
+                            const AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Icon(Icons.refresh, color: Colors.white),
+              onPressed: controller.isGettingDrivers
+                  ? null
+                  : () => controller.getDrivers(),
+            );
+          },
+        ),
+        SizedBox(width: 8.w),
+      ],
     );
   }
 
+// Replace _buildSearchBar() with this combined search and stats widget
   Widget _buildSearchBar() {
     return SliverToBoxAdapter(
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: TextField(
-          controller: _searchController,
-          onChanged: (value) {
-            setState(() {
-              _searchQuery = value.toLowerCase();
-            });
-          },
-          decoration: InputDecoration(
-            hintText: 'Search drivers...',
-            prefixIcon: const Icon(Icons.search, color: Colors.grey),
-            suffixIcon: _searchQuery.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear, color: Colors.grey),
-                    onPressed: () {
-                      _searchController.clear();
-                      setState(() {
-                        _searchQuery = '';
-                      });
-                    },
-                  )
-                : null,
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 15),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDriverStats() {
-    return SliverToBoxAdapter(
-      child: GetBuilder<DriverController>(
-        init: DriverController(),
-        builder: (controller) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            child: Row(
-              children: [
-                _buildStatCard(
-                  context,
-                  title: 'Total Drivers',
-                  value: controller.drivers.length.toString(),
-                  icon: Icons.people,
-                  iconColor: Theme.of(context).primaryColor,
-                  backgroundColor: Colors.blue.withOpacity(0.1),
-                ),
-                // const SizedBox(width: 12),
-                // _buildStatCard(
-                //   context,
-                //   title: 'Available',
-                //   value: controller.drivers
-                //       .where((d) => !d.isAssigned)
-                //       .length
-                //       .toString(),
-                //   icon: Icons.person_pin_circle,
-                //   iconColor: Colors.green,
-                //   backgroundColor: Colors.green.withOpacity(0.1),
-                // ),
-                // const SizedBox(width: 12),
-                // _buildStatCard(
-                //   context,
-                //   title: 'Assigned',
-                //   value: controller.drivers
-                //       .where((d) => d.isAssigned)
-                //       .length
-                //       .toString(),
-                //   icon: Icons.local_taxi,
-                //   iconColor: Colors.orange,
-                //   backgroundColor: Colors.orange.withOpacity(0.1),
-                // ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildStatCard(
-    BuildContext context, {
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color iconColor,
-    required Color backgroundColor,
-  }) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+        child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: backgroundColor,
-                borderRadius: BorderRadius.circular(10),
+            // Search Bar
+            Expanded(
+              flex: 3,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value.toLowerCase();
+                    });
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Search drivers...',
+                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, color: Colors.grey),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {
+                                _searchQuery = '';
+                              });
+                            },
+                          )
+                        : null,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                  ),
+                ),
               ),
-              child: Icon(icon, color: iconColor, size: 20),
             ),
-            const SizedBox(height: 12),
-            Text(
-              value,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 12,
+
+            // Stats Card
+            SizedBox(width: 12.w),
+            Expanded(
+              flex: 2,
+              child: GetBuilder<DriverController>(
+                init: DriverController(),
+                builder: (controller) {
+                  return Container(
+                    padding: EdgeInsets.all(12.w),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(8.w),
+                          decoration: BoxDecoration(
+                            color:
+                                Theme.of(context).primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Icon(
+                            Icons.people,
+                            color: Theme.of(context).primaryColor,
+                            size: 16.sp,
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Total',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 10.sp,
+                              ),
+                            ),
+                            Text(
+                              controller.drivers.length.toString(),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16.sp,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -344,7 +318,7 @@ class _DriversScreenState extends State<DriversScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(left: 4, bottom: 12),
+                  padding: const EdgeInsets.only(left: 4),
                   child: Text(
                     'Driver List',
                     style: TextStyle(

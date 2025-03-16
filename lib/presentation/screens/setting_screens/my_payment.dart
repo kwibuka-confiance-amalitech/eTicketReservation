@@ -1,5 +1,6 @@
 import 'package:car_ticket/controller/payments/user_payment.dart';
 import 'package:car_ticket/domain/models/payment/customer_payment.dart';
+import 'package:car_ticket/presentation/widgets/common/refresh_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get_state_manager/get_state_manager.dart';
@@ -23,12 +24,13 @@ class MyPayments extends StatelessWidget {
           ),
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.filter_list, size: 24.sp),
-            onPressed: () {
-              // TODO: Implement filter
-            },
-          ),
+          GetBuilder<UserPaymentController>(builder: (userPaymentController) {
+            return RefreshButton(
+              isLoading: userPaymentController.isGettingUserPayments,
+              onRefresh: () => userPaymentController.getCustomerPayments(),
+            );
+          }),
+          SizedBox(width: 8.w),
         ],
       ),
       body: GetBuilder(

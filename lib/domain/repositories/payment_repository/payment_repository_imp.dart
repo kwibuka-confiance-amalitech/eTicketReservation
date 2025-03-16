@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:car_ticket/domain/models/carSeats.dart';
 import 'package:car_ticket/domain/models/payment/customer_payment.dart';
 import 'package:car_ticket/domain/models/seat.dart';
 import 'package:car_ticket/domain/models/ticket/ticket.dart';
@@ -20,6 +21,7 @@ class PaymentRepositoryImpl extends PaymentRepository {
   Map<String, dynamic>? paymentIntent;
   final _paymentCollection = FirebaseFirestore.instance.collection('payments');
   final _ticketsCollection = FirebaseFirestore.instance.collection('tickets');
+  final _carSeatsCollection = FirebaseFirestore.instance.collection('carSeats');
   TicketAppSharedPreferenceRepository sharedPreferenceRepository =
       TicketAppSharedPreferenceRepository();
   CarRepositoryImp carRepository = CarRepositoryImp();
@@ -55,12 +57,14 @@ class PaymentRepositoryImpl extends PaymentRepository {
 
   @override
   Future<void> displayPaymentSheet(
-      String carId,
-      List<Seat> carSeats,
-      String clientSecret,
-      String destinationId,
-      String carDestinationFromTime,
-      String carDestinationToTime) async {
+    String carId,
+    List<Seat> carSeats,
+    String clientSecret,
+    String destinationId,
+    String carDestinationFromTime,
+    String carDestinationToTime,
+    String pickupLocation,
+  ) async {
     try {
       final user = await sharedPreferenceRepository.getUser();
       Uuid uuid = const Uuid();
@@ -90,7 +94,8 @@ class PaymentRepositoryImpl extends PaymentRepository {
           destinationId: destinationId,
           carDestinationFromTime: carDestinationFromTime,
           carDestinationToTime: carDestinationToTime,
-          ticketAmount: result.amount.toString());
+          ticketAmount: result.amount.toString(),
+          pickupLocation: pickupLocation);
       Get.offNamed(PaymentSuccessScreen.routeName);
     } on Exception catch (e) {
       if (e is StripeException) {
@@ -109,7 +114,8 @@ class PaymentRepositoryImpl extends PaymentRepository {
       List<Seat> carSeats,
       String destinationId,
       String carDestinationFromTime,
-      String carDestinationToTime) async {
+      String carDestinationToTime,
+      String pickupLocation) async {
     try {
       final user = await sharedPreferenceRepository.getUser();
       paymentIntent = await createPaymentIntent(amount, currency);
@@ -126,8 +132,14 @@ class PaymentRepositoryImpl extends PaymentRepository {
           ))
           .then((value) {});
 
-      displayPaymentSheet(carId, carSeats, paymentIntent!['client_secret'],
-          destinationId, carDestinationFromTime, carDestinationToTime);
+      displayPaymentSheet(
+          carId,
+          carSeats,
+          paymentIntent!['client_secret'],
+          destinationId,
+          carDestinationFromTime,
+          carDestinationToTime,
+          pickupLocation);
     } catch (e) {
       print(e.toString());
       Fluttertoast.showToast(msg: e.toString());
@@ -177,7 +189,8 @@ class PaymentRepositoryImpl extends PaymentRepository {
       required String destinationId,
       required String carDestinationFromTime,
       required String ticketAmount,
-      required String carDestinationToTime}) async {
+      required String carDestinationToTime,
+      required String pickupLocation}) async {
     try {
       final user = await sharedPreferenceRepository.getUser();
       Uuid uuid = const Uuid();
@@ -190,6 +203,7 @@ class PaymentRepositoryImpl extends PaymentRepository {
         seats: carSeats,
         isExpired: false,
         isUsed: false,
+        pickupLocation: pickupLocation,
         carDestinationFromTime: carDestinationFromTime,
         carDestinationToTime: carDestinationToTime,
         createdAt: DateTime.now(),
@@ -230,9 +244,53 @@ class PaymentRepositoryImpl extends PaymentRepository {
   }
 
   @override
-  Future<void> updateTicket(ExcelTicket ticket) {
+  Future<void> updateTicket(ExcelTicket ticket) async {
     try {
-      return _ticketsCollection.doc(ticket.id).update(ticket.toDocument());
+      await _ticketsCollection.doc(ticket.id).update({
+        ...ticket.toDocument(),
+        'isCancelled': ticket.isCancelled,
+        'cancelledAt': ticket.cancelledAt != null
+            ? Timestamp.fromDate(ticket.cancelledAt!)
+            : null,
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> cancelTicket(String ticketId) async {
+    try {
+      await _ticketsCollection.doc(ticketId).update({
+        'isCancelled': true,
+        'cancelledAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> updateCarSeatsAfterCancellation(
+      String carId, List<String> seatNumbers) async {
+    try {
+      final carSeatsDoc = await _carSeatsCollection.doc(carId).get();
+      if (!carSeatsDoc.exists) return;
+
+      final carSeats = CarSeats.fromDocument(carSeatsDoc.data()!);
+      final updatedSeats = carSeats.seatsList.map((seat) {
+        if (seatNumbers.contains(seat.seatNumber)) {
+          return seat.copyWith(
+            isBooked: false,
+            isReserved: false,
+          );
+        }
+        return seat;
+      }).toList();
+
+      await _carSeatsCollection.doc(carId).update({
+        'seatsList': updatedSeats.map((s) => s.toDocument()).toList(),
+      });
     } catch (e) {
       rethrow;
     }

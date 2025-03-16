@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 class MyTicketController extends GetxController {
   final PaymentRepositoryImpl paymentRepository =
       Get.put(PaymentRepositoryImpl());
-  TicketAppSharedPreferenceRepository sharedPreferenceRepository =
+  final TicketAppSharedPreferenceRepository sharedPreferenceRepository =
       TicketAppSharedPreferenceRepository();
   bool isGettingTickets = false;
   List<ExcelTicket> ticketsList = [];
@@ -17,21 +17,34 @@ class MyTicketController extends GetxController {
     super.onInit();
   }
 
-  getTickets() async {
+  Future<void> getTickets() async {
     try {
       isGettingTickets = true;
       update();
-      List<ExcelTicket> tickets = [];
-      final user = await sharedPreferenceRepository.getUser();
-      tickets = await paymentRepository.getMyTickets(userId: user.id);
-      ticketsList = tickets;
 
-      isGettingTickets = false;
-      update();
+      final user = await sharedPreferenceRepository.getUser();
+      if (user.id.isEmpty) {
+        ticketsList = [];
+        return;
+      }
+
+      final tickets = await paymentRepository.getMyTickets(userId: user.id);
+
+      // Ensure no null tickets in the list
+      ticketsList = tickets.where((ticket) => ticket != null).toList();
+
+      // Sort tickets by date (newest first)
+      ticketsList.sort((a, b) {
+        final aDate = a.createdAt ?? DateTime.now();
+        final bDate = b.createdAt ?? DateTime.now();
+        return bDate.compareTo(aDate);
+      });
     } catch (e) {
+      print('Error fetching tickets: $e');
+      ticketsList = [];
+    } finally {
       isGettingTickets = false;
       update();
-      rethrow;
     }
   }
 }

@@ -17,6 +17,8 @@ class SelectedDestinationController extends GetxController {
       Get.put(PaymentRepositoryImpl());
   List<Seat> selectedSeats = [];
   String? selectedDestinationOption;
+  String? selectedPickupLocation;
+
   @override
   void onInit() {
     getCarSeats(selectedDestination.value.carId);
@@ -56,21 +58,30 @@ class SelectedDestinationController extends GetxController {
     update();
   }
 
-  payPriceHandler({required String carId, required List<Seat> seats}) async {
+  Future<void> payPriceHandler({
+    required String carId,
+    required List<Seat> seats,
+    required String pickupLocation,
+  }) async {
     try {
       showPaymentSheet = true;
       update();
+
       final amount = double.parse(selectedDestination.value.price).toInt() *
           selectedSeatsCount;
       const currency = 'rwf';
+
       await paymentRepository.stripeMakePayment(
-          amount.toString(),
-          currency,
-          carId,
-          seats,
-          selectedDestination.value.id,
-          selectedDestination.value.from,
-          selectedDestination.value.to);
+        amount.toString(),
+        currency,
+        carId,
+        seats,
+        selectedDestination.value.id,
+        selectedDestination.value.from,
+        selectedDestination.value.to,
+        pickupLocation,
+      );
+
       showPaymentSheet = false;
       update();
       Get.back();
@@ -90,35 +101,13 @@ class SelectedDestinationController extends GetxController {
     }
   }
 
-  selectedPickupLocationHandler(String? value) {
-    selectedDestinationOption = value;
-    update();
+  void selectedPickupLocationHandler(String? value) {
+    if (value != null && value.isNotEmpty) {
+      selectedPickupLocation = value;
+      print('Selected pickup location: $value'); // Debug print
+      update();
+    }
   }
 
   get selectedSeatsCount => selectedSeats.length;
 }
-
-
-
-// final seatsList = carSeats.seatsList.map((e) {
-//       if (e.id == seat.id) {
-    // if (seat.isBooked) {
-        //   return e;
-      // }
-
-//         if (seat.isReserved) {
-//           selectedSeats.removeWhere((element) => element.id == seat.id);
-//         } else {
-//           seat.copyWith(isReserved: !seat.isReserved);
-//           seat.isReserved = !seat.isReserved;
-//           seat.copyWith(isBooked: !seat.isBooked);
-//           seat.isBooked = !seat.isBooked;
-//           selectedSeats.add(seat);
-//         }
-
-//         return seat.copyWith(isReserved: !seat.isReserved);
-//       }
-//       return e;
-//     }).toList();
-
-//     carSeats = carSeats.copyWith(seatsList: seatsList);

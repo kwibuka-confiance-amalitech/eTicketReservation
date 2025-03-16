@@ -2,6 +2,7 @@ import 'package:car_ticket/controller/payments/dashboard_payment.dart';
 import 'package:car_ticket/domain/models/payment/customer_payment.dart';
 import 'package:car_ticket/presentation/screens/setting_screens/my_payment.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -38,6 +39,40 @@ class PaymentsScreen extends StatelessWidget {
       expandedHeight: 280.h,
       pinned: true,
       backgroundColor: Theme.of(context).primaryColor,
+      // Add system overlay style
+      systemOverlayStyle: const SystemUiOverlayStyle(
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      // Set icon theme for all icons
+      iconTheme: const IconThemeData(color: Colors.white),
+      // Explicit back button
+      leading: IconButton(
+        icon: const Icon(
+          Icons.arrow_back,
+          color: Colors.white,
+        ),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      // Add refresh action
+      actions: [
+        IconButton(
+          icon: controller.isGettingUserPayments
+              ? SizedBox(
+                  width: 20.w,
+                  height: 20.h,
+                  child: const CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : const Icon(Icons.refresh, color: Colors.white),
+          onPressed: controller.isGettingUserPayments
+              ? null
+              : () => controller.getUserPayments(),
+        ),
+        SizedBox(width: 8.w),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: BoxDecoration(
