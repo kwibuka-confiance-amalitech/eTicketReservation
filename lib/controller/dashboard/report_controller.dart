@@ -1,3 +1,5 @@
+import 'package:car_ticket/controller/dashboard/car_controller.dart';
+import 'package:car_ticket/domain/models/car/car.dart';
 import 'package:car_ticket/domain/models/payment/customer_payment.dart';
 import 'package:car_ticket/domain/models/user/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,6 +8,7 @@ import 'package:intl/intl.dart';
 
 class ReportController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final carController = Get.find<CarController>(); // Add this line at the top
   bool isLoadingEarnings = false;
   bool isLoadingMembers = false;
 
@@ -19,6 +22,9 @@ class ReportController extends GetxController {
   int totalBookings = 0;
   double totalRevenue = 0;
   double averageBookingValue = 0;
+
+  // Add this field to cache destinations
+  final Map<String, String> _destinationCache = {};
 
   // Get earnings report data
   Future<void> getEarningsReportData(
@@ -218,6 +224,15 @@ class ReportController extends GetxController {
       isLoadingEarnings = true;
       update();
 
+      // First, fetch all destinations at once and cache them
+      final destinationsSnapshot =
+          await _firestore.collection('destinations').get();
+      for (var doc in destinationsSnapshot.docs) {
+        final data = doc.data();
+        _destinationCache[doc.id] =
+            data['description'] ?? 'Unknown Route'; // Use description directly
+      }
+
       // Normalize dates
       final startDateTime =
           DateTime(startDate.year, startDate.month, startDate.day);
@@ -232,12 +247,14 @@ class ReportController extends GetxController {
 
       final userCache = <String, Map<String, dynamic>>{};
 
-      // Process tickets with user data
+      // Process tickets with user and destination data
       final allCancelledTickets = await Future.wait(
         ticketsQuery.docs.map((doc) async {
           final ticket = doc.data();
           final userId = ticket['userId'] as String?;
+          final destinationId = ticket['destinationId'] as String?;
 
+          // Get user data
           if (userId != null && !userCache.containsKey(userId)) {
             final userDoc =
                 await _firestore.collection('users').doc(userId).get();
@@ -247,6 +264,8 @@ class ReportController extends GetxController {
           return {
             ...ticket,
             'customerName': userCache[userId]?['name'] ?? 'Unknown User',
+            'destinationDescription':
+                _destinationCache[destinationId] ?? 'Unknown Route',
           };
         }),
       );
@@ -285,12 +304,43 @@ class ReportController extends GetxController {
               sum + (double.tryParse(ticket['price'].toString()) ?? 0),
         );
 
+        // Get car plate for each ticket
+        final ticketsWithPlates = tickets.map((ticket) {
+          final car = carController.cars.firstWhere(
+            (car) => car.id == ticket['carId'],
+            orElse: () => ExcelCar(
+              id: '',
+              plateNumber: 'Unknown',
+              name: '',
+              model: '',
+              seatNumbers: 0, // Add required parameter
+              color: 'Unknown', // Add required parameter
+              type: 'Unknown', // Add required parameter
+              year: 'Unknown', // Add required parameter
+              driverId: '', // Add required parameter
+              isAssigned: false, // Add required parameter
+            ),
+          );
+          return {
+            ...ticket,
+            'carPlate': car.plateNumber,
+          };
+        }).toList();
+
         cancelledTicketsData.add({
           'date': _formatReportDate(date),
           'count': count.toString(),
           'amount': 'RWF ${NumberFormat("#,###").format(amount)}',
           'reasons': _getCancellationReasons(tickets),
           'customerName': tickets.map((t) => t['customerName']).join(', '),
+          'destination': tickets
+              .map((t) => t['destinationDescription'])
+              .join(', '), // Replace ticketId with destination
+          'carPlate': ticketsWithPlates
+              .map((t) => t['carPlate'])
+              .join(', '), // Use carPlate instead of carId
+          'seatNumbers':
+              tickets.map((t) => t['seatNumbers'] ?? 'N/A').join(', '),
         });
 
         totalCancelledTickets += count;

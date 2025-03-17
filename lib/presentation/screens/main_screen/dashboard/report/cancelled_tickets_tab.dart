@@ -71,6 +71,33 @@ class CancelledTicketsTab extends StatelessWidget {
                       ),
                       DataColumn(
                         label: Text(
+                          'Destination', // Changed from 'Ticket ID'
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          'Car Plate',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          'Seats',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
                           'Customer',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
@@ -80,25 +107,7 @@ class CancelledTicketsTab extends StatelessWidget {
                       ),
                       DataColumn(
                         label: Text(
-                          'Tickets',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: Text(
                           'Amount',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: Text(
-                          'Reasons',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Theme.of(context).primaryColor,
@@ -118,6 +127,41 @@ class CancelledTicketsTab extends StatelessWidget {
                           ),
                           DataCell(
                             Container(
+                              constraints: BoxConstraints(maxWidth: 200),
+                              child: Text(
+                                entry['destination'] ?? 'Unknown Route',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.blue[700],
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            Text(
+                              entry['carPlate'],
+                              style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                color: Colors.purple[700],
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            Container(
+                              constraints: BoxConstraints(maxWidth: 120),
+                              child: Text(
+                                entry['seatNumbers'],
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.green[700],
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            Container(
                               constraints: BoxConstraints(maxWidth: 150),
                               child: Text(
                                 entry['customerName'] ?? 'Unknown',
@@ -131,31 +175,9 @@ class CancelledTicketsTab extends StatelessWidget {
                           ),
                           DataCell(
                             Text(
-                              entry['count'],
-                              style: TextStyle(
-                                color: Colors.red[700],
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          DataCell(
-                            Text(
                               entry['amount'],
                               style:
                                   const TextStyle(fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                          DataCell(
-                            Container(
-                              constraints: BoxConstraints(maxWidth: 200),
-                              child: Text(
-                                entry['reasons'],
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.grey,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
                             ),
                           ),
                         ],

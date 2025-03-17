@@ -5,6 +5,7 @@ import 'package:car_ticket/domain/repositories/user/user_repository.dart';
 import 'package:car_ticket/presentation/screens/auth/auth_screen.dart';
 import 'package:car_ticket/presentation/screens/car_all_details/car_available_more_details.dart';
 import 'package:car_ticket/presentation/screens/main_screen/dashboard/car/cars.dart';
+import 'package:car_ticket/presentation/screens/main_screen/dashboard/car_details/car_journey_details_screen.dart';
 import 'package:car_ticket/presentation/screens/main_screen/dashboard/dashboard.dart';
 import 'package:car_ticket/presentation/screens/main_screen/dashboard/destination/destinations.dart';
 import 'package:car_ticket/presentation/screens/main_screen/dashboard/driver/drivers.dart';
@@ -102,6 +103,11 @@ class MyApp extends StatelessWidget {
                 MyTicketScreen.routeName: (context) => const MyTicketScreen(),
                 DashboardReportScreen.routeName: (context) =>
                     const DashboardReportScreen(),
+                CarJourneyDetailsScreen.routeName: (context) =>
+                    CarJourneyDetailsScreen(
+                      carId: Get.arguments['carId'] ?? '',
+                      destinationId: Get.arguments['destinationId'] ?? '',
+                    )
               });
         });
   }

@@ -46,9 +46,9 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>We need to save QR codes to your photo library</string>
+	<string>This app needs access to save tickets to your photo library</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>We need permission to save QR codes to your photo library</string>
+	<string>This app needs access to save tickets to your photo library</string>
 	<key>NSCameraUsageDescription</key>
 	<string>We need camera access to scan QR codes</string>
 </dict>

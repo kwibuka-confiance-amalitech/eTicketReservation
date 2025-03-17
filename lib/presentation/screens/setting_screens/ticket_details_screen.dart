@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:car_ticket/controller/dashboard/car_controller.dart';
 import 'package:car_ticket/controller/dashboard/journey_destination_controller.dart';
@@ -10,6 +11,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
@@ -587,22 +589,6 @@ class TicketDetailsScreen extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _saveTicketToGallery(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: 14.h),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                      ),
-                      icon: Icon(Icons.save),
-                      label: Text('Save Ticket'),
-                    ),
-                  ),
-                  SizedBox(width: 16.w),
-                  Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () => _shareTicket(context),
                       style: OutlinedButton.styleFrom(
@@ -726,37 +712,68 @@ class TicketDetailsScreen extends StatelessWidget {
   // Save ticket as image
   Future<void> _saveTicketToGallery(BuildContext context) async {
     try {
-      // Capture ticket as image
-      final image = await screenshotController.capture();
+      // Show loading indicator
+      Get.dialog(
+        Center(
+          child: Container(
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16.h),
+                Text('Saving ticket...'),
+              ],
+            ),
+          ),
+        ),
+        barrierDismissible: false,
+      );
+
+      // Capture the screenshot
+      final Uint8List? image = await screenshotController.capture();
       if (image == null) throw 'Failed to capture ticket';
 
-      // Create file name
+      // Generate filename
       final fileName =
-          'Ticket_${ticket.id.substring(0, 5)}_${DateTime.now().millisecondsSinceEpoch}';
+          'ticket_${_formatTicketId(ticket.id)}_${DateTime.now().millisecondsSinceEpoch}';
 
-      // Save the file using file_saver
-      final savedPath = await FileSaver.instance.saveFile(
+      // Save file using file_saver
+      final savedFilePath = await FileSaver.instance.saveFile(
         name: fileName,
         bytes: image,
         ext: 'png',
         mimeType: MimeType.png,
       );
 
-      // Show success message
+      // Close loading dialog
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
+
       Get.snackbar(
         'Success',
         'Ticket saved successfully',
-        snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green,
         colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e) {
+      // Close loading dialog if open
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
+
       Get.snackbar(
         'Error',
-        'Failed to save ticket: $e',
-        snackPosition: SnackPosition.BOTTOM,
+        'Failed to save ticket: ${e.toString()}',
         backgroundColor: Colors.red,
         colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
       );
     }
   }
@@ -800,5 +817,20 @@ class TicketDetailsScreen extends StatelessWidget {
     }
 
     return ticketId.padRight(5, '0').toUpperCase();
+  }
+
+  // Add this method to your TicketDetailsScreen class
+  Future<bool> _requestPermissions() async {
+    if (Platform.isAndroid) {
+      final status = await Permission.storage.request();
+      return status.isGranted;
+    }
+
+    if (Platform.isIOS) {
+      final status = await Permission.photos.request();
+      return status.isGranted;
+    }
+
+    return false;
   }
 }

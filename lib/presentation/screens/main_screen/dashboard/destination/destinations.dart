@@ -1280,6 +1280,19 @@ class DestinationDetailsView extends StatelessWidget {
             ),
           ),
         ),
+
+        // Add a button to navigate:
+        ElevatedButton.icon(
+          onPressed: () => _navigateToCarJourneyDetails(
+            destination.carId,
+            destination.id,
+          ),
+          icon: const Icon(Icons.visibility),
+          label: const Text('View Passengers'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).primaryColor,
+          ),
+        ),
       ],
     );
   }
@@ -1347,5 +1360,12 @@ class DestinationDetailsView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _navigateToCarJourneyDetails(String carId, String destinationId) {
+    Get.toNamed('/car-journey-details', arguments: {
+      'carId': carId,
+      'destinationId': destinationId,
+    });
   }
 }

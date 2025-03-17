@@ -35,7 +35,7 @@ dependencies:
   fluttertoast: ^8.2.5
   qr_flutter: ^4.1.0
   screenshot: ^3.0.0
-  file_saver: ^0.2.13 # Make sure this is included
+  file_saver: ^0.2.12 # Make sure this is included
   flutter_svg: ^2.0.8
   pdf: ^3.10.7
   printing: ^5.11.1
@@ -45,9 +45,9 @@ dependencies:
   flutter_staggered_animations: ^1.1.1
   animations: ^2.0.7
   shimmer: ^3.0.0
-  permission_handler: ^11.0.1
+  permission_handler: ^11.2.1
   share_plus: ^7.2.1
-  path_provider: ^2.1.1
+  path_provider: ^2.1.2
   mobile_scanner: ^6.0.6
 
   # HTTP - downgrade to be compatible with gallery_saver
