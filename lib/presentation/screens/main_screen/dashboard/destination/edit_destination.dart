@@ -21,37 +21,32 @@ class _EditDestinationWidgetState extends State<EditDestinationWidget> {
   final _formKey = GlobalKey<FormState>();
 
   // Form controllers
-  late TextEditingController _fromController;
-  late TextEditingController _toController;
   late TextEditingController _descriptionController;
   late TextEditingController _priceController;
   late TextEditingController _durationController;
 
-  // Selected locations
-  String? _selectedFrom;
-  String? _selectedTo;
+  // Time state variables
+  late String _fromTime;
+  late String _toTime;
 
   @override
   void initState() {
     super.initState();
 
     // Initialize with existing values
-    _fromController = TextEditingController(text: widget.destination.from);
-    _toController = TextEditingController(text: widget.destination.to);
     _descriptionController =
         TextEditingController(text: widget.destination.description);
     _priceController = TextEditingController(text: widget.destination.price);
     _durationController =
         TextEditingController(text: widget.destination.duration);
 
-    _selectedFrom = widget.destination.from;
-    _selectedTo = widget.destination.to;
+    // Initialize times from destination
+    _fromTime = widget.destination.from ?? 'Select Time';
+    _toTime = widget.destination.to ?? 'Select Time';
   }
 
   @override
   void dispose() {
-    _fromController.dispose();
-    _toController.dispose();
     _descriptionController.dispose();
     _priceController.dispose();
     _durationController.dispose();
@@ -94,210 +89,139 @@ class _EditDestinationWidgetState extends State<EditDestinationWidget> {
             child: SingleChildScrollView(
               child: Form(
                 key: _formKey,
-                child: GetBuilder<JourneyDestinationController>(
-                  init: JourneyDestinationController(),
-                  builder: (controller) {
-                    // Create a list of unique locations
-                    final List<String> locations =
-                        controller.getUniqueLocations();
-
-                    // If current locations are not in the list, add them
-                    if (!locations.contains(_selectedFrom) &&
-                        _selectedFrom != null) {
-                      locations.add(_selectedFrom!);
-                    }
-
-                    if (!locations.contains(_selectedTo) &&
-                        _selectedTo != null) {
-                      locations.add(_selectedTo!);
-                    }
-
-                    return Column(
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // From location dropdown
-                        _buildLabel('From Location'),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 16.w, vertical: 4.h),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                            borderRadius: BorderRadius.circular(8.r),
-                            border: Border.all(color: Colors.grey[300]!),
-                          ),
-                          child: DropdownButtonFormField<String>(
-                            isExpanded: true,
-                            value: _selectedFrom,
-                            decoration: const InputDecoration(
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                            hint: const Text('Select departure location'),
-                            items: locations.map((location) {
-                              return DropdownMenuItem<String>(
-                                value: location,
-                                child: Text(location),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedFrom = value;
-                                _fromController.text = value ?? '';
-                              });
-                            },
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please select a departure location';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                        Gap(16.h),
-
-                        // To location dropdown
-                        _buildLabel('To Location'),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 16.w, vertical: 4.h),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                            borderRadius: BorderRadius.circular(8.r),
-                            border: Border.all(color: Colors.grey[300]!),
-                          ),
-                          child: DropdownButtonFormField<String>(
-                            isExpanded: true,
-                            value: _selectedTo,
-                            decoration: const InputDecoration(
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                            hint: const Text('Select destination location'),
-                            items: locations.map((location) {
-                              return DropdownMenuItem<String>(
-                                value: location,
-                                child: Text(location),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedTo = value;
-                                _toController.text = value ?? '';
-                              });
-                            },
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please select a destination location';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                        Gap(16.h),
-
-                        // Description field
-                        _buildLabel('Route Description'),
-                        TextFormField(
-                          controller: _descriptionController,
-                          maxLines: 3,
-                          decoration: InputDecoration(
-                            hintText: 'Enter route description',
-                            filled: true,
-                            fillColor: Colors.grey[100],
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.r),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter a description';
-                            }
-                            return null;
+                        // From time
+                        TimePickerWidget(
+                          chooseTime: _fromTime,
+                          title: 'Departure Time',
+                          onTimeChanged: (time) {
+                            setState(() {
+                              _fromTime = time;
+                            });
                           },
                         ),
                         Gap(16.h),
 
-                        // Price and duration in a row
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildLabel('Price (RWF)'),
-                                  TextFormField(
-                                    controller: _priceController,
-                                    keyboardType: TextInputType.number,
-                                    decoration: InputDecoration(
-                                      hintText: 'Enter price',
-                                      filled: true,
-                                      fillColor: Colors.grey[100],
-                                      border: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(8.r),
-                                        borderSide: BorderSide(
-                                            color: Colors.grey[300]!),
-                                      ),
-                                      prefixIcon: Icon(
-                                        Icons.attach_money,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Required';
-                                      }
-                                      if (double.tryParse(value) == null) {
-                                        return 'Invalid number';
-                                      }
-                                      return null;
-                                    },
+                        // To time
+                        TimePickerWidget(
+                          chooseTime: _toTime,
+                          title: 'Arrival Time',
+                          onTimeChanged: (time) {
+                            setState(() {
+                              _toTime = time;
+                            });
+                          },
+                        ),
+                        Gap(16.h),
+                      ],
+                    ),
+
+                    Gap(30),
+
+                    // Description field
+                    _buildLabel('Route Description'),
+                    TextFormField(
+                      controller: _descriptionController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        hintText: 'Enter route description',
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a description';
+                        }
+                        return null;
+                      },
+                    ),
+                    Gap(16.h),
+
+                    // Price and duration in a row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildLabel('Price (RWF)'),
+                              TextFormField(
+                                controller: _priceController,
+                                keyboardType: TextInputType.number,
+                                decoration: InputDecoration(
+                                  hintText: 'Enter price',
+                                  filled: true,
+                                  fillColor: Colors.grey[100],
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                    borderSide:
+                                        BorderSide(color: Colors.grey[300]!),
                                   ),
-                                ],
-                              ),
-                            ),
-                            Gap(16.w),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildLabel('Duration (Hours)'),
-                                  TextFormField(
-                                    controller: _durationController,
-                                    keyboardType: TextInputType.number,
-                                    decoration: InputDecoration(
-                                      hintText: 'Enter hours',
-                                      filled: true,
-                                      fillColor: Colors.grey[100],
-                                      border: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(8.r),
-                                        borderSide: BorderSide(
-                                            color: Colors.grey[300]!),
-                                      ),
-                                      prefixIcon: Icon(
-                                        Icons.timelapse,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Required';
-                                      }
-                                      if (double.tryParse(value) == null) {
-                                        return 'Invalid number';
-                                      }
-                                      return null;
-                                    },
+                                  prefixIcon: Icon(
+                                    Icons.attach_money,
+                                    color: Colors.grey[600],
                                   ),
-                                ],
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Required';
+                                  }
+                                  if (double.tryParse(value) == null) {
+                                    return 'Invalid number';
+                                  }
+                                  return null;
+                                },
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                        ),
+                        Gap(16.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildLabel('Duration (Hours)'),
+                              TextFormField(
+                                controller: _durationController,
+                                keyboardType: TextInputType.number,
+                                decoration: InputDecoration(
+                                  hintText: 'Enter hours',
+                                  filled: true,
+                                  fillColor: Colors.grey[100],
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                    borderSide:
+                                        BorderSide(color: Colors.grey[300]!),
+                                  ),
+                                  prefixIcon: Icon(
+                                    Icons.timelapse,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Required';
+                                  }
+                                  if (double.tryParse(value) == null) {
+                                    return 'Invalid number';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       ],
-                    );
-                  },
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -387,11 +311,11 @@ class _EditDestinationWidgetState extends State<EditDestinationWidget> {
 
       // Create updated destination object
       final updatedDestination = widget.destination.copyWith(
-        from: _selectedFrom!,
-        to: _selectedTo!,
         description: _descriptionController.text,
         price: _priceController.text,
         duration: _durationController.text,
+        from: _fromTime, // Add this
+        to: _toTime, // Add this
       );
 
       // Update in controller
@@ -443,7 +367,6 @@ class TimePickerWidget extends StatefulWidget {
 class _TimePickerWidgetState extends State<TimePickerWidget> {
   @override
   Widget build(BuildContext context) {
-    print(widget.chooseTime);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

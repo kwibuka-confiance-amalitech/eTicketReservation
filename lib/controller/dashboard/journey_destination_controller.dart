@@ -101,9 +101,56 @@ class JourneyDestinationController extends GetxController {
 
   Future searchDestinations(String time, String location) async {
     try {
-      await journeyRepository.searchDestinations(time, location);
+      isGettingDestinations = true;
+      update();
+
+      // Parse the location value (id-from-to format)
+      final parts = location.split('-');
+      if (parts.length < 3) {
+        throw 'Invalid location format';
+      }
+
+      final destinationId = parts[0];
+
+      // Find the selected destination
+      final selectedDestination = destinations.firstWhere(
+        (dest) => dest.id == destinationId,
+        orElse: () => throw 'Destination not found',
+      );
+
+      // Filter destinations based on time and route
+      final filteredDestinations = destinations
+          .where((dest) =>
+              dest.to == time &&
+              dest.from == selectedDestination.from &&
+              dest.to == selectedDestination.to)
+          .toList();
+
+      destinations = filteredDestinations;
+      // isAllDestinationsShown = false;
+
+      isGettingDestinations = false;
+      update();
+
+      if (filteredDestinations.isEmpty) {
+        Get.snackbar(
+          "No Results",
+          "No routes found for selected time and destination",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange.withOpacity(0.8),
+          colorText: Colors.white,
+        );
+      }
     } catch (e) {
-      rethrow;
+      isGettingDestinations = false;
+      update();
+      Get.snackbar(
+        "Error",
+        "Failed to search destinations: ${e.toString()}",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+      );
     }
   }
 
@@ -292,5 +339,13 @@ class JourneyDestinationController extends GetxController {
     // Convert to sorted list
     final locations = uniqueLocations.toList()..sort();
     return locations;
+  }
+
+  // Add method to format time consistently
+  String formatTimeString(TimeOfDay time) {
+    final hour = time.hourOfPeriod.toString().padLeft(2, '0');
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+    return '$hour:$minute $period';
   }
 }

@@ -1,10 +1,9 @@
 import 'package:car_ticket/controller/home/destinations.dart';
-import 'package:car_ticket/presentation/screens/main_screen/dashboard/destination/edit_destination.dart';
 import 'package:car_ticket/presentation/screens/main_screen/home/car_availability_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
-import 'package:get/get_state_manager/get_state_manager.dart';
+import 'package:get/get.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -139,143 +138,125 @@ class SearchAlert {
     showDialog(
       context: context,
       builder: (context) {
-        return GetBuilder(
-            builder: (HomeJourneyDestinationController homeDestController) {
-          return AlertDialog(
-            title: const Text("Filter"),
-            content: Wrap(
-              children: [
-                Column(
-                  children: [
-                    const Text(
-                        "Choose a date you want to travel and also select the your destination to get the available cars."),
-                    Gap(20.h),
-                    Container(
-                      width: MediaQuery.of(context).size.width,
-                      padding: EdgeInsets.symmetric(horizontal: 20.w),
-                      decoration: BoxDecoration(
-                          border: Border.all(
-                              color: Colors.grey.shade400,
-                              width: 1.5,
-                              style: BorderStyle.solid),
-                          borderRadius: BorderRadius.circular(10)),
-                      child: DropdownButton<String>(
-                        value: homeDestController.selectedDestinationOption,
-                        isExpanded: true,
-                        icon: const Icon(Icons.arrow_downward),
-                        iconSize: 16,
-                        elevation: 16,
-                        hint: const Text("Select Destination"),
-                        style: const TextStyle(
-                            color: Color.fromARGB(255, 71, 71, 71)),
-                        underline: Container(
-                          height: 0,
-                          color: const Color.fromARGB(255, 68, 68, 68),
-                        ),
-                        onChanged: homeDestController.selectedDestinationChange,
-                        items: destinationNames.map<DropdownMenuItem<String>>(
-                            (DestinationName value) {
-                          return DropdownMenuItem<String>(
-                            value: value.name.toString(),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 14.r,
-                                  backgroundColor:
+        return GetBuilder<HomeJourneyDestinationController>(
+          builder: (homeDestController) {
+            return AlertDialog(
+              title: const Text("Filter Routes"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Destination Dropdown
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.grey.shade400,
+                        width: 1.5,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: DropdownButton<String>(
+                      value: homeDestController.selectedDestinationOption,
+                      isExpanded: true,
+                      hint: const Text("Select Route"),
+                      underline: const SizedBox(),
+                      items: homeDestController.destinations.map((destination) {
+                        return DropdownMenuItem(
+                          value: destination.description,
+                          child: Text(destination.description),
+                        );
+                      }).toList(),
+                      onChanged: homeDestController.selectedDestinationChange,
+                    ),
+                  ),
+
+                  Gap(16.h),
+
+                  // Time Picker
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.grey.shade400,
+                        width: 1.5,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: InkWell(
+                      onTap: () async {
+                        final TimeOfDay? picked = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                          builder: (context, child) {
+                            return Theme(
+                              data: ThemeData.light().copyWith(
+                                colorScheme: ColorScheme.light(
+                                  primary:
                                       Theme.of(context).colorScheme.secondary,
-                                  foregroundColor: Colors.white,
-                                  child: Text(
-                                    value.name.substring(0, 1),
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600),
-                                  ),
                                 ),
-                                SizedBox(
-                                  width: 10.w,
-                                ),
-                                Text(
-                                  value.name,
-                                ),
-                              ],
-                            ),
+                              ),
+                              child: child!,
+                            );
+                          },
+                        );
+
+                        if (picked != null) {
+                          homeDestController.selectedTimeChange(
+                            homeDestController.formatTimeString(picked),
                           );
-                        }).toList(),
+                        }
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        child: Row(
+                          children: [
+                            Icon(Icons.access_time, color: Colors.grey[600]),
+                            SizedBox(width: 8.w),
+                            Text(
+                              homeDestController.selectedTimeOption ??
+                                  'Select Time',
+                              style: TextStyle(fontSize: 16.sp),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const Gap(10),
-                    Container(
-                      width: MediaQuery.of(context).size.width,
-                      padding: EdgeInsets.symmetric(horizontal: 20.w),
-                      decoration: BoxDecoration(
-                          border: Border.all(
-                              color: Colors.grey.shade400,
-                              width: 1.5,
-                              style: BorderStyle.solid),
-                          borderRadius: BorderRadius.circular(10)),
-                      child: DropdownButton<String>(
-                        value: homeDestController.selectedTimeOption,
-                        isExpanded: true,
-                        icon: const Icon(Icons.arrow_downward),
-                        iconSize: 16,
-                        elevation: 16,
-                        hint: const Text("Select Time"),
-                        style: const TextStyle(
-                            color: Color.fromARGB(255, 71, 71, 71)),
-                        underline: Container(
-                          height: 0,
-                          color: const Color.fromARGB(255, 68, 68, 68),
-                        ),
-                        onChanged: homeDestController.selectedTimeChange,
-                        items: timeOfAvailableHours
-                            .map<DropdownMenuItem<String>>(
-                                (TimeOfAvailableHour value) {
-                          return DropdownMenuItem<String>(
-                            value: value.hourValue.toString(),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 14,
-                                  backgroundColor:
-                                      Theme.of(context).colorScheme.secondary,
-                                  foregroundColor: Colors.white,
-                                  child: Text(
-                                    value.hourValue.substring(0, 1),
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: 10.w,
-                                ),
-                                Text(
-                                  value.hourValue,
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                    const Gap(10),
-                  ],
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (homeDestController.selectedDestinationOption == null ||
+                        homeDestController.selectedTimeOption == null) {
+                      Get.snackbar(
+                        'Error',
+                        'Please select both route and time',
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: Colors.red,
+                        colorText: Colors.white,
+                      );
+                      return;
+                    }
+
+                    Navigator.pop(context);
+                    homeDestController.searchDestinations(
+                      homeDestController.selectedTimeOption!,
+                      homeDestController.selectedDestinationOption!,
+                    );
+                  },
+                  child: const Text('Search'),
                 ),
               ],
-            ),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  homeDestController.searchDestinations(
-                      homeDestController.selectedTimeOption!,
-                      homeDestController.selectedDestinationOption!);
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        });
+            );
+          },
+        );
       },
     );
   }
