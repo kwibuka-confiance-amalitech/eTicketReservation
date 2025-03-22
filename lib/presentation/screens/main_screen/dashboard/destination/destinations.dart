@@ -1254,43 +1254,67 @@ class DestinationDetailsView extends StatelessWidget {
               ),
             ],
           ),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => _showAssignCarSheet(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: destination.isAssigned
-                    ? Colors.orange
-                    : Theme.of(context).primaryColor,
-                padding: EdgeInsets.symmetric(vertical: 12.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+          child: Column(
+            children: [
+              // Assign/Change Vehicle Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _showAssignCarSheet(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: destination.isAssigned
+                        ? Colors.orange
+                        : Theme.of(context).primaryColor,
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  icon: Icon(
+                    destination.isAssigned
+                        ? Icons.swap_horiz
+                        : Icons.directions_car,
+                    color: Colors.white,
+                  ),
+                  label: Text(
+                    destination.isAssigned
+                        ? 'Change Vehicle'
+                        : 'Assign Vehicle',
+                    style: const TextStyle(color: Colors.white),
+                  ),
                 ),
               ),
-              icon: Icon(
-                destination.isAssigned
-                    ? Icons.swap_horiz
-                    : Icons.directions_car,
-                color: Colors.white,
-              ),
-              label: Text(
-                destination.isAssigned ? 'Change Vehicle' : 'Assign Vehicle',
-                style: const TextStyle(color: Colors.white),
-              ),
-            ),
-          ),
-        ),
 
-        // Add a button to navigate:
-        ElevatedButton.icon(
-          onPressed: () => _navigateToCarJourneyDetails(
-            destination.carId,
-            destination.id,
-          ),
-          icon: const Icon(Icons.visibility),
-          label: const Text('View Passengers'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Theme.of(context).primaryColor,
+              SizedBox(height: 12.h), // Add spacing between buttons
+
+              // View Passengers Button
+              if (destination.isAssigned) // Only show if a vehicle is assigned
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _navigateToCarJourneyDetails(
+                      destination.carId,
+                      destination.id,
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          Theme.of(context).primaryColor.withOpacity(0.9),
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    icon: const Icon(Icons.people_alt, color: Colors.white),
+                    label: const Text(
+                      'View Passengers',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ],

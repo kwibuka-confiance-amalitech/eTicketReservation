@@ -379,19 +379,8 @@ class ShowPickupLocation {
               ),
               ElevatedButton(
                 onPressed: () {
-                  if (selectedDestinationController.selectedPickupLocation ==
-                      null) {
-                    Get.snackbar(
-                      'Error',
-                      'Please select your pickup location',
-                      backgroundColor: Colors.red,
-                      colorText: Colors.white,
-                    );
-                    return;
-                  }
                   Navigator.pop(context);
-
-                  // Show payment sheet with selected location
+                  // Show payment sheet
                   showModalBottomSheet(
                     context: context,
                     isScrollControlled: true,
@@ -400,8 +389,9 @@ class ShowPickupLocation {
                       seats: selectedSeats,
                       carId: selectedDestinationController
                           .selectedDestination.value.carId,
-                      pickupLocation:
-                          selectedDestinationController.selectedPickupLocation!,
+                      pickupLocation: selectedDestinationController
+                              .selectedPickupLocation ??
+                          '',
                     ),
                   );
                 },
@@ -445,18 +435,6 @@ class PaymentBottomSheet extends StatelessWidget {
       ),
       child: GetBuilder<SelectedDestinationController>(
         builder: (controller) {
-          // Verify pickup location
-          if (pickupLocation.isEmpty) {
-            Get.back();
-            Get.snackbar(
-              'Error',
-              'Please select a pickup location',
-              backgroundColor: Colors.red,
-              colorText: Colors.white,
-            );
-            return const SizedBox.shrink();
-          }
-
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -472,43 +450,45 @@ class PaymentBottomSheet extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 12),
-                    // Show selected pickup location
-                    Container(
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey[200]!),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.location_on, color: Colors.orange[700]),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Pickup Location',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 12,
+                    // Show pickup location if selected
+                    if (pickupLocation.isNotEmpty) ...[
+                      Container(
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey[200]!),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.location_on, color: Colors.orange[700]),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Pickup Location',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 12,
+                                    ),
                                   ),
-                                ),
-                                Text(
-                                  pickupLocation,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 14,
+                                  Text(
+                                    pickupLocation,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 20),
+                      SizedBox(height: 20),
+                    ],
                     ElevatedButton(
                       onPressed: () => controller.payPriceHandler(
                         carId: carId,
